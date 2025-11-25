@@ -6,4 +6,7 @@ gunicorn==21.2.0
 whitenoise==6.7.0
 psycopg[binary]==3.2.13
 dj-database-url==2.1.0
+<<<<<<< HEAD
 Pillow==10.4.0
+=======
+>>>>>>> 78d98c50a3f8b096ef10f6a7df476b586755d1ee
