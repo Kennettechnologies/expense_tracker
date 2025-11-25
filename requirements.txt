@@ -4,5 +4,5 @@ pytz==2025.2
 python-dateutil==2.8.2
 gunicorn==21.2.0
 whitenoise==6.7.0
-psycopg2-binary==2.9.9
+psycopg[binary]==3.1.18
 dj-database-url==2.1.0
