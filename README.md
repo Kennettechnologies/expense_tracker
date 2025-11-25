@@ -24,7 +24,8 @@ A comprehensive Django-based web application for tracking personal or business e
 2. **Set up a virtual environment**
    - Windows:
      ```powershell
-     python -m venv .venv
+     py -3.11 -m venv .venv
+
      .\.venv\Scripts\Activate.ps1
      ```
    - macOS/Linux:
