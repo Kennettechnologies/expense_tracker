@@ -1,0 +1,31 @@
+# render.yaml
+
+# Build command
+builds:
+  - name: expense-tracker
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py migrate
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn expense_tracker.wsgi:application
+
+# Services
+services:
+  - type: web
+    name: expense-tracker
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py migrate
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn expense_tracker.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+      - key: DJANGO_SETTINGS_MODULE
+        value: expense_tracker.settings
+      - key: DISABLE_COLLECTSTATIC
+        value: 0
+    plan: free
+    numInstances: 1
