@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% comment %}Debug Info: {{ custom_filters|default:"No custom_filters loaded" }}{% endcomment %}
+
+{% block extra_css %}
+<style>
+  .search-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 15px;
+  }
+  
+  .bulk-actions-card {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    border: none;
+    border-radius: 15px;
+  }
+  
+  .transaction-row {
+    transition: background-color 0.2s ease;
+  }
+  
+  .transaction-row:hover {
+    background-color: rgba(0,0,0,0.02);
+  }
+  
+  .transaction-row.selected {
+    background-color: rgba(102, 126, 234, 0.1);
+  }
+  
+  .select-all-checkbox {
+    transform: scale(1.2);
+  }
+  
+  .amount-income {
+    color: #28a745;
+    font-weight: 600;
+  }
+  
+  .amount-expense {
+    color: #dc3545;
+    font-weight: 600;
+  }
+  
+  .amount-transfer {
+    color: #17a2b8;
+    font-weight: 600;
+  }
+  
+  .tag-badge {
+    background-color: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Advanced Transaction Management</h2>
+    <p class="text-muted mb-0">Search, filter, and manage transactions in bulk</p>
+  </div>
+  <a href="{% url 'transaction_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Add Transaction
+  </a>
+</div>
+
+<!-- Advanced Search -->
+<div class="card search-card mb-4">
+  <div class="card-body">
+    <h5 class="card-title mb-3">
+      <i class="fas fa-search me-2"></i>Advanced Search & Filters
+    </h5>
+    
+    <form method="get" id="searchForm">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Search Description</label>
+          {{ search_form.query }}
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Category</label>
+          {{ search_form.category }}
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Transaction Type</label>
+          {{ search_form.trans_type }}
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Account</label>
+          {{ search_form.account }}
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Date From</label>
+          {{ search_form.date_from }}
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Date To</label>
+          {{ search_form.date_to }}
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Tags</label>
+          {{ search_form.tags }}
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Amount Range</label>
+          <div class="row">
+            <div class="col">
+              {{ search_form.amount_min }}
+            </div>
+            <div class="col-auto align-self-center">
+              <span>to</span>
+            </div>
+            <div class="col">
+              {{ search_form.amount_max }}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-light me-2">
+            <i class="fas fa-search me-2"></i>Search
+          </button>
+          <a href="{% url 'transactions_advanced' %}" class="btn btn-outline-light">
+            <i class="fas fa-times me-2"></i>Clear
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Results Summary -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <span class="text-muted">Showing {{ transactions|length }} of {{ total_count }} transactions</span>
+  </div>
+  <div class="btn-group" role="group">
+    <a href="{% url 'transactions' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-list me-1"></i>Simple View
+    </a>
+    <a href="{% url 'export_csv' %}" class="btn btn-outline-primary btn-sm">
+      <i class="fas fa-download me-1"></i>Export All
+    </a>
+  </div>
+</div>
+
+{% if transactions %}
+  <!-- Bulk Actions -->
+  <div class="card bulk-actions-card mb-4">
+    <div class="card-body">
+      <form method="post" action="{% url 'transactions_bulk_action' %}" id="bulkForm">
+        {% csrf_token %}
+        <div class="row align-items-end">
+          <div class="col-md-3 mb-2">
+            <label class="form-label">Bulk Action</label>
+            {{ bulk_form.action }}
+          </div>
+          <div class="col-md-3 mb-2" id="categoryField" style="display: none;">
+            <label class="form-label">New Category</label>
+            {{ bulk_form.category }}
+          </div>
+          <div class="col-md-3 mb-2" id="tagsField" style="display: none;">
+            <label class="form-label">Tags to Add</label>
+            {{ bulk_form.tags }}
+          </div>
+          <div class="col-md-3 mb-2">
+            <button type="submit" class="btn btn-light" id="bulkActionBtn" disabled>
+              <i class="fas fa-cogs me-2"></i>Apply to Selected
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th width="50">
+              <input type="checkbox" class="form-check-input select-all-checkbox" id="selectAll">
+            </th>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Account</th>
+            <th>Amount</th>
+            <th>Tags</th>
+            <th width="100">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for transaction in transactions %}
+            <tr class="transaction-row">
+              <td>
+                <input type="checkbox" class="form-check-input transaction-checkbox" 
+                       name="selected_transactions" value="{{ transaction.id }}" form="bulkForm">
+              </td>
+              <td>
+                <div class="fw-bold">{{ transaction.date|date:"M d, Y" }}</div>
+                {% if transaction.time %}
+                  <small class="text-muted">{{ transaction.time|time:"g:i A" }}</small>
+                {% endif %}
+              </td>
+              <td>
+                <div class="fw-bold">{{ transaction.description|default:"No description" }}</div>
+                <span class="badge bg-{{ transaction.trans_type|yesno:'success,danger,info' }} badge-sm">
+                  {{ transaction.get_trans_type_display }}
+                </span>
+              </td>
+              <td>
+                {% if transaction.category %}
+                  <span class="badge bg-light text-dark">{{ transaction.category.name }}</span>
+                {% else %}
+                  <span class="text-muted">Uncategorized</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if transaction.account %}
+                  {{ transaction.account.name }}
+                  <br><small class="text-muted">{{ transaction.account.get_account_type_display }}</small>
+                {% else %}
+                  <span class="text-muted">No account</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="amount-{{ transaction.trans_type }}">
+                  {% if transaction.trans_type == 'expense' %}-{% endif %}${{ transaction.amount|floatformat:2 }}
+                </span>
+              </td>
+              <td>
+                {% if transaction.tags %}
+                  {% for tag in transaction.tags|split:',' %}
+                    <span class="badge tag-badge me-1">#{{ tag|striptags }}</span>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">No tags</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="btn-group" role="group">
+                  <a href="{% url 'transaction_edit' transaction.pk %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <a href="{% url 'transaction_duplicate' transaction.pk %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-copy"></i>
+                  </a>
+                  <a href="{% url 'transaction_delete' transaction.pk %}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if transactions.has_other_pages %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if transactions.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">First</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ transactions.previous_page_number }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">Previous</a>
+          </li>
+        {% endif %}
+        
+        <li class="page-item active">
+          <span class="page-link">Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}</span>
+        </li>
+        
+        {% if transactions.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ transactions.next_page_number }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">Next</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ transactions.paginator.num_pages }}{% if request.GET.query %}&query={{ request.GET.query }}{% endif %}">Last</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
+{% else %}
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i class="fas fa-search fa-4x text-muted"></i>
+    </div>
+    <h4 class="text-muted mb-3">No Transactions Found</h4>
+    <p class="text-muted mb-4">Try adjusting your search criteria or add some transactions to get started.</p>
+    <a href="{% url 'transaction_create' %}" class="btn btn-primary">
+      <i class="fas fa-plus me-2"></i>Add Your First Transaction
+    </a>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Bootstrap classes to form fields
+    const formControls = document.querySelectorAll('input, select, textarea');
+    formControls.forEach(function(control) {
+        if (!control.classList.contains('btn') && !control.classList.contains('form-check-input')) {
+            control.classList.add('form-control');
+        }
+    });
+    
+    // Select All functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const transactionCheckboxes = document.querySelectorAll('.transaction-checkbox');
+    const bulkActionBtn = document.getElementById('bulkActionBtn');
+    const actionSelect = document.querySelector('select[name="action"]');
+    const categoryField = document.getElementById('categoryField');
+    const tagsField = document.getElementById('tagsField');
+    
+    selectAllCheckbox.addEventListener('change', function() {
+        transactionCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+            updateRowSelection(checkbox);
+        });
+        updateBulkActionButton();
+    });
+    
+    transactionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateRowSelection(this);
+            updateSelectAllState();
+            updateBulkActionButton();
+        });
+    });
+    
+    function updateRowSelection(checkbox) {
+        const row = checkbox.closest('tr');
+        if (checkbox.checked) {
+            row.classList.add('selected');
+        } else {
+            row.classList.remove('selected');
+        }
+    }
+    
+    function updateSelectAllState() {
+        const checkedBoxes = document.querySelectorAll('.transaction-checkbox:checked');
+        selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < transactionCheckboxes.length;
+        selectAllCheckbox.checked = checkedBoxes.length === transactionCheckboxes.length;
+    }
+    
+    function updateBulkActionButton() {
+        const checkedBoxes = document.querySelectorAll('.transaction-checkbox:checked');
+        bulkActionBtn.disabled = checkedBoxes.length === 0;
+        
+        if (checkedBoxes.length > 0) {
+            bulkActionBtn.innerHTML = `<i class="fas fa-cogs me-2"></i>Apply to ${checkedBoxes.length} Selected`;
+        } else {
+            bulkActionBtn.innerHTML = '<i class="fas fa-cogs me-2"></i>Apply to Selected';
+        }
+    }
+    
+    // Show/hide conditional fields based on action
+    actionSelect.addEventListener('change', function() {
+        categoryField.style.display = this.value === 'change_category' ? 'block' : 'none';
+        tagsField.style.display = this.value === 'add_tags' ? 'block' : 'none';
+    });
+    
+    // Form submission confirmation
+    document.getElementById('bulkForm').addEventListener('submit', function(e) {
+        const action = actionSelect.value;
+        const checkedBoxes = document.querySelectorAll('.transaction-checkbox:checked');
+        
+        if (checkedBoxes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one transaction.');
+            return;
+        }
+        
+        if (action === 'delete') {
+            if (!confirm(`Are you sure you want to delete ${checkedBoxes.length} transactions? This action cannot be undone.`)) {
+                e.preventDefault();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

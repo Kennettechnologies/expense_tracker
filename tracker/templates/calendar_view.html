@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block extra_css %}
+<style>
+  .calendar-container {
+    background: radial-gradient(circle at top left, #1b5e20 0%, #0b3d20 45%, #02150c 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+  }
+  
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .calendar-nav {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .calendar-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+  
+  .calendar-grid {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  
+  .calendar-weekdays {
+    background: #f8f9fa;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  
+  .calendar-weekday {
+    padding: 1rem;
+    text-align: center;
+    font-weight: bold;
+    color: #495057;
+    border-right: 1px solid #dee2e6;
+  }
+  
+  .calendar-weekday:last-child {
+    border-right: none;
+  }
+  
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  
+  .calendar-day {
+    min-height: 120px;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .calendar-day:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .calendar-day:last-child {
+    border-right: none;
+  }
+  
+  .calendar-day.other-month {
+    background-color: #f8f9fa;
+    color: #6c757d;
+  }
+  
+  .calendar-day.today {
+    background-color: #e3f2fd;
+    border: 2px solid #2196f3;
+  }
+  
+  .calendar-day.has-transactions {
+    background-color: #fff3cd;
+  }
+  
+  .calendar-day.has-transactions.today {
+    background-color: #d4edda;
+  }
+  
+  .day-number {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .day-total {
+    position: absolute;
+    bottom: 0.25rem;
+    left: 0.25rem;
+    right: 0.25rem;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+  
+  .day-total.positive {
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 4px;
+    padding: 0.125rem;
+  }
+  
+  .day-total.negative {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 4px;
+    padding: 0.125rem;
+  }
+  
+  .transaction-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 1px;
+  }
+  
+  .transaction-dot.income {
+    background-color: #28a745;
+  }
+  
+  .transaction-dot.expense {
+    background-color: #dc3545;
+  }
+  
+  .transaction-dot.transfer {
+    background-color: #ffc107;
+  }
+  
+  .monthly-summary {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    backdrop-filter: blur(10px);
+  }
+  
+  .summary-item {
+    text-align: center;
+    color: white;
+  }
+  
+  .summary-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+  }
+  
+  .summary-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+  }
+  
+  .transaction-modal .modal-content {
+    border-radius: 15px;
+  }
+  
+  .transaction-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .transaction-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+  }
+  
+  .transaction-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  
+  .transaction-item.income {
+    border-left: 4px solid #28a745;
+  }
+  
+  .transaction-item.expense {
+    border-left: 4px solid #dc3545;
+  }
+  
+  .transaction-item.transfer {
+    border-left: 4px solid #ffc107;
+  }
+  
+  .quick-add-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #66BB6A 0%, #388E3C 100%);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    z-index: 9999;
+    cursor: pointer;
+  }
+  
+  .quick-add-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Calendar Header -->
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <div>
+        <h1 class="h3 mb-2">
+          <i class="fas fa-calendar-alt"></i> Transaction Calendar
+        </h1>
+        <p class="mb-0">View your transactions in calendar format</p>
+      </div>
+      <div class="d-flex align-items-center">
+        <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn calendar-nav me-2">
+          <i class="fas fa-chevron-left"></i>
+        </a>
+        <h2 class="mx-3 mb-0">{{ month_name }} {{ year }}</h2>
+        <a href="?year={{ next_year }}&month={{ next_month }}" class="btn calendar-nav ms-2">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Monthly Summary -->
+    <div class="monthly-summary">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="summary-item">
+            <div class="summary-value text-success">${{ monthly_income|floatformat:0 }}</div>
+            <div class="summary-label">Total Income</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="summary-item">
+            <div class="summary-value text-danger">${{ monthly_expenses|floatformat:0 }}</div>
+            <div class="summary-label">Total Expenses</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="summary-item">
+            <div class="summary-value {% if monthly_net >= 0 %}text-success{% else %}text-danger{% endif %}">
+              ${{ monthly_net|floatformat:0 }}
+            </div>
+            <div class="summary-label">Net Amount</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Grid -->
+  <div class="calendar-grid">
+    <!-- Weekday Headers -->
+    <div class="calendar-weekdays">
+      {% for weekday in weekdays %}
+      <div class="calendar-weekday">{{ weekday }}</div>
+      {% endfor %}
+    </div>
+    
+    <!-- Calendar Days -->
+    <div class="calendar-days">
+      {% for week in month_days %}
+        {% for day in week %}
+          {% if day == 0 %}
+            <div class="calendar-day other-month"></div>
+          {% else %}
+            {% with day_str=year|stringformat:"s"|add:"-"|add:month|stringformat:"02d"|add:"-"|add:day|stringformat:"02d" %}
+            <div class="calendar-day {% if day_str in daily_totals %}has-transactions{% endif %} {% if day_str == today %}today{% endif %}"
+                 data-date="{{ day_str }}"
+                 onclick="showDayTransactions('{{ day_str }}')">
+              <div class="day-number">{{ day }}</div>
+              
+              {% if day_str in daily_totals %}
+                <!-- Transaction Dots -->
+                <div class="mb-2">
+                  {% for transaction in transactions_by_date|get_item:day_str %}
+                    <span class="transaction-dot {{ transaction.type }}"></span>
+                  {% endfor %}
+                </div>
+                
+                <!-- Daily Total -->
+                {% with day_data=daily_totals|get_item:day_str %}
+                <div class="day-total {% if day_data.net >= 0 %}positive{% else %}negative{% endif %}">
+                  ${{ day_data.net|floatformat:0 }}
+                {% endwith %}
+                </div>
+              {% endif %}
+            </div>
+            {% endwith %}
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Quick Add Button -->
+  <button class="quick-add-btn" id="quickAddBtn" title="Quick Add Transaction">
+    <i class="fas fa-plus"></i>
+  </button>
+</div>
+
+<!-- Transaction Details Modal -->
+<div class="modal fade transaction-modal" id="transactionModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Transactions for <span id="modalDate"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Transaction details will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary" id="addTransactionBtn">
+          <i class="fas fa-plus"></i> Add Transaction
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Transaction data from Django
+const transactionsByDate = {{ transactions_by_date|safe }};
+const dailyTotals = {{ daily_totals|safe }};
+
+function showDayTransactions(dateStr) {
+    const modal = new bootstrap.Modal(document.getElementById('transactionModal'));
+    const modalDate = document.getElementById('modalDate');
+    const modalBody = document.getElementById('modalBody');
+    const addBtn = document.getElementById('addTransactionBtn');
+    
+    // Format date for display
+    const date = new Date(dateStr);
+    const formattedDate = date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    
+    modalDate.textContent = formattedDate;
+    
+    // Update add transaction button with date
+    const addUrl = new URL(addBtn.href);
+    addUrl.searchParams.set('date', dateStr);
+    addBtn.href = addUrl.toString();
+    
+    // Get transactions for this date
+    const transactions = transactionsByDate[dateStr] || [];
+    const totals = dailyTotals[dateStr] || { income: 0, expense: 0, net: 0 };
+    
+    if (transactions.length === 0) {
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No transactions for this day</h5>
+                <p class="text-muted">Click "Add Transaction" to create your first transaction for ${formattedDate}.</p>
+            </div>
+        `;
+    } else {
+        // Display daily summary
+        let html = `
+            <div class="row mb-3">
+                <div class="col-md-4 text-center">
+                    <div class="h5 text-success mb-1">$${totals.income.toFixed(2)}</div>
+                    <small class="text-muted">Income</small>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="h5 text-danger mb-1">$${totals.expense.toFixed(2)}</div>
+                    <small class="text-muted">Expenses</small>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="h5 ${totals.net >= 0 ? 'text-success' : 'text-danger'} mb-1">$${totals.net.toFixed(2)}</div>
+                    <small class="text-muted">Net</small>
+                </div>
+            </div>
+            <hr>
+            <div class="transaction-list">
+        `;
+        
+        // Display transactions
+        transactions.forEach(transaction => {
+            const typeIcon = {
+                'income': 'fas fa-arrow-up',
+                'expense': 'fas fa-arrow-down',
+                'transfer': 'fas fa-exchange-alt'
+            }[transaction.type] || 'fas fa-circle';
+            
+            const typeColor = {
+                'income': 'text-success',
+                'expense': 'text-danger',
+                'transfer': 'text-warning'
+            }[transaction.type] || 'text-secondary';
+            
+            html += `
+                <div class="transaction-item ${transaction.type}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="${typeIcon} ${typeColor} me-2"></i>
+                                <span class="fw-medium">${transaction.description || 'No description'}</span>
+                                ${transaction.time ? `<small class="text-muted ms-2">${transaction.time}</small>` : ''}
+                            </div>
+                            <div class="small text-muted">
+                                ${transaction.category} • ${transaction.account}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold ${typeColor}">$${transaction.amount.toFixed(2)}</div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/transactions/${transaction.id}/edit/">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="/transactions/${transaction.id}/duplicate/">
+                                        <i class="fas fa-copy"></i> Duplicate
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="/transactions/${transaction.id}/delete/">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        modalBody.innerHTML = html;
+    }
+    
+    modal.show();
+}
+
+function quickAddTransaction() {
+    console.log('quickAddTransaction called');
+    try {
+        // Get today's date or selected date
+        const today = new Date().toISOString().split('T')[0];
+        const url = '{% url "transaction_create" %}?date=' + today;
+        console.log('Redirecting to:', url);
+        window.location.href = url;
+    } catch (error) {
+        console.error('Error in quickAddTransaction:', error);
+        // Fallback - redirect without date parameter
+        window.location.href = '{% url "transaction_create" %}';
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    
+    const currentMonth = {{ month }};
+    const currentYear = {{ year }};
+    
+    if (e.key === 'ArrowLeft') {
+        // Previous month
+        const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+        const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+        window.location.href = `?year=${prevYear}&month=${prevMonth}`;
+    } else if (e.key === 'ArrowRight') {
+        // Next month
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+        window.location.href = `?year=${nextYear}&month=${nextMonth}`;
+    } else if (e.key === 'n' || e.key === 'N') {
+        // Quick add transaction
+        quickAddTransaction();
+    } else if (e.key === 't' || e.key === 'T') {
+        // Go to today
+        const today = new Date();
+        window.location.href = `?year=${today.getFullYear()}&month=${today.getMonth() + 1}`;
+    }
+});
+
+// Highlight today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayElement = document.querySelector(`[data-date="${today}"]`);
+    if (todayElement) {
+        todayElement.classList.add('today');
+    }
+});
+
+// Touch/swipe support for mobile
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', function(e) {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+        const currentMonth = {{ month }};
+        const currentYear = {{ year }};
+        
+        if (diff > 0) {
+            // Swipe left - next month
+            const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+            const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+            window.location.href = `?year=${nextYear}&month=${nextMonth}`;
+        } else {
+            // Swipe right - previous month
+            const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+            const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+            window.location.href = `?year=${prevYear}&month=${prevMonth}`;
+        }
+    }
+}
+
+// Add event listener for quick add button
+document.addEventListener('DOMContentLoaded', function() {
+    const quickAddBtn = document.getElementById('quickAddBtn');
+    if (quickAddBtn) {
+        quickAddBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Quick add button clicked');
+            quickAddTransaction();
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  .login-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .login-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  
+  .login-header {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  .login-body {
+    background: white;
+    padding: 2rem;
+  }
+  
+  .form-control {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+  
+  .btn-login {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+  }
+  
+  .welcome-text {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .subtitle {
+    opacity: 0.9;
+    margin-bottom: 0;
+  }
+  
+  .demo-credentials {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #667eea;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="card login-card">
+          <div class="login-header">
+            <div class="welcome-text">Welcome Back!</div>
+            <p class="subtitle">Sign in to your expense tracker</p>
+          </div>
+          
+          <div class="login-body">
+            <!-- Demo Credentials -->
+            <div class="demo-credentials">
+              <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Demo Credentials</h6>
+              <p class="mb-1"><strong>Username:</strong> testuser</p>
+              <p class="mb-0"><strong>Password:</strong> password123</p>
+            </div>
+            
+            {% if form.errors %}
+              <div class="alert alert-danger">
+                {% for field, errors in form.errors.items %}
+                  {% for error in errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                {% endfor %}
+              </div>
+            {% endif %}
+            
+            <form method="post">
+              {% csrf_token %}
+              
+              <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                  <i class="fas fa-user me-2"></i>Username
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="{{ form.username.id_for_label }}"
+                       name="{{ form.username.name }}"
+                       value="{{ form.username.value|default:'' }}"
+                       placeholder="Enter your username"
+                       required>
+              </div>
+              
+              <div class="mb-4">
+                <label for="{{ form.password.id_for_label }}" class="form-label">
+                  <i class="fas fa-lock me-2"></i>Password
+                </label>
+                <input type="password" 
+                       class="form-control" 
+                       id="{{ form.password.id_for_label }}"
+                       name="{{ form.password.name }}"
+                       placeholder="Enter your password"
+                       required>
+              </div>
+              
+              <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-login">
+                  <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                </button>
+              </div>
+              
+              <div class="text-center">
+                <p class="mb-0">Don't have an account? 
+                  <a href="{% url 'signup' %}" class="text-decoration-none fw-bold" style="color: #667eea;">
+                    Sign up here
+                  </a>
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Features Preview -->
+        <div class="mt-4 text-center">
+          <h5 class="mb-3">What's New in Phase 2</h5>
+          <div class="row">
+            <div class="col-6 col-md-3 mb-2">
+              <div class="p-2 bg-light rounded">
+                <i class="fas fa-clipboard-list text-primary mb-1"></i>
+                <br><small>Templates</small>
+              </div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+              <div class="p-2 bg-light rounded">
+                <i class="fas fa-bullseye text-success mb-1"></i>
+                <br><small>Goals</small>
+              </div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+              <div class="p-2 bg-light rounded">
+                <i class="fas fa-file-invoice-dollar text-warning mb-1"></i>
+                <br><small>Bills</small>
+              </div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+              <div class="p-2 bg-light rounded">
+                <i class="fas fa-search text-info mb-1"></i>
+                <br><small>Advanced Search</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

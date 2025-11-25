@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block extra_css %}
+<style>
+  .ai-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 3rem;
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+  }
+  
+  .insight-card {
+    border: none;
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+  
+  .insight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+  
+  .insight-card.warning {
+    border-left: 5px solid #dc3545;
+  }
+  
+  .insight-card.success {
+    border-left: 5px solid #28a745;
+  }
+  
+  .insight-card.info {
+    border-left: 5px solid #17a2b8;
+  }
+  
+  .insight-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+  }
+  
+  .icon-warning {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+  
+  .icon-success {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+  
+  .icon-info {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+  }
+  
+  .priority-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+  }
+  
+  .priority-high {
+    background: #dc3545;
+    color: white;
+  }
+  
+  .priority-medium {
+    background: #ffc107;
+    color: #212529;
+  }
+  
+  .priority-low {
+    background: #28a745;
+    color: white;
+  }
+  
+  .prediction-card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .prediction-amount {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .confidence-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+  
+  .confidence-fill {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    transition: width 0.8s ease;
+  }
+  
+  .category-analysis {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .category-bar {
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+  }
+  
+  .category-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.8s ease;
+  }
+  
+  .savings-opportunity {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .savings-amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #28a745;
+  }
+  
+  .ai-stats {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+  }
+  
+  .stat-item {
+    text-align: center;
+    color: white;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+  }
+  
+  .stat-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+  }
+  
+  .trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    margin-left: 0.5rem;
+  }
+  
+  .trend-increasing {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+  
+  .trend-decreasing {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+  
+  .trend-stable {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- AI Header -->
+  <div class="ai-header">
+    <h1 class="h2 mb-3">
+      <i class="fas fa-brain"></i> AI Financial Insights
+    </h1>
+    <p class="mb-4">Powered by artificial intelligence to analyze your spending patterns and provide personalized recommendations</p>
+    
+    <!-- AI Stats -->
+    <div class="ai-stats">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value">{{ insights|length }}</div>
+            <div class="stat-label">Smart Insights</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value">{{ predictions|length }}</div>
+            <div class="stat-label">Predictions</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value">{{ category_insights|length }}</div>
+            <div class="stat-label">Categories Analyzed</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-item">
+            <div class="stat-value">${{ savings_opportunities|length|mul:150|floatformat:0 }}</div>
+            <div class="stat-label">Potential Savings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <!-- AI Insights -->
+      <div class="mb-4">
+        <h3 class="mb-3">
+          <i class="fas fa-lightbulb text-warning"></i> Smart Insights
+        </h3>
+        
+        {% for insight in insights %}
+        <div class="card insight-card {{ insight.type }}">
+          <div class="card-body">
+            <div class="d-flex align-items-start">
+              <div class="insight-icon icon-{{ insight.type }}">
+                {% if insight.type == 'warning' %}
+                  <i class="fas fa-exclamation-triangle"></i>
+                {% elif insight.type == 'success' %}
+                  <i class="fas fa-check-circle"></i>
+                {% else %}
+                  <i class="fas fa-info-circle"></i>
+                {% endif %}
+              </div>
+              
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h5 class="mb-0">{{ insight.title }}</h5>
+                  <span class="badge priority-{{ insight.priority }}">
+                    {{ insight.priority|title }} Priority
+                  </span>
+                </div>
+                
+                <p class="mb-2 text-muted">{{ insight.description }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-primary">
+                    <i class="fas fa-arrow-right"></i> {{ insight.action }}
+                  </small>
+                  <small class="text-muted">
+                    <i class="fas fa-robot"></i> AI Generated
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="card">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-brain fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No insights available yet</h5>
+            <p class="text-muted">Add more transactions to get personalized AI insights.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Spending Predictions -->
+      <div class="mb-4">
+        <h3 class="mb-3">
+          <i class="fas fa-crystal-ball text-info"></i> Spending Predictions
+        </h3>
+        
+        {% for prediction in predictions %}
+        <div class="prediction-card">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="mb-0">{{ prediction.title }}</h5>
+            <span class="trend-indicator trend-{{ prediction.trend }}">
+              <i class="fas fa-{% if prediction.trend == 'increasing' %}arrow-up{% elif prediction.trend == 'decreasing' %}arrow-down{% else %}minus{% endif %}"></i>
+              {{ prediction.trend|title }}
+            </span>
+          </div>
+          
+          <div class="prediction-amount">${{ prediction.predicted_amount|floatformat:2 }}</div>
+          
+          <p class="mb-2">{{ prediction.description }}</p>
+          
+          <div class="d-flex justify-content-between align-items-center">
+            <small>Confidence Level</small>
+            <small>{{ prediction.confidence }}%</small>
+          </div>
+          <div class="confidence-bar">
+            <div class="confidence-fill" style="width: {{ prediction.confidence }}%"></div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="card">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-crystal-ball fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No predictions available</h5>
+            <p class="text-muted">More transaction history needed for accurate predictions.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Category Analysis -->
+      <div class="mb-4">
+        <h3 class="mb-3">
+          <i class="fas fa-chart-pie text-success"></i> Category Analysis
+        </h3>
+        
+        {% for category in category_insights %}
+        <div class="category-analysis">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0 fw-bold">{{ category.category }}</h6>
+            <div class="text-end">
+              <div class="fw-bold">${{ category.total_spent|floatformat:2 }}</div>
+              <small class="text-muted">{{ category.percentage|floatformat:1 }}% of total</small>
+            </div>
+          </div>
+          
+          <div class="category-bar">
+            <div class="category-fill" style="width: {{ category.percentage }}%"></div>
+          </div>
+          
+          <div class="row mt-2">
+            <div class="col-md-6">
+              <small class="text-muted">Transactions: {{ category.transaction_count }}</small>
+            </div>
+            <div class="col-md-6 text-end">
+              <small class="text-muted">Avg: ${{ category.avg_transaction|floatformat:2 }}</small>
+            </div>
+          </div>
+          
+          <div class="mt-2 p-2 bg-light rounded">
+            <small class="text-primary">
+              <i class="fas fa-lightbulb"></i> {{ category.recommendation }}
+            </small>
+          </div>
+        </div>
+        {% empty %}
+        <div class="card">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No category data available</h5>
+            <p class="text-muted">Start categorizing your transactions for detailed analysis.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Savings Opportunities -->
+      <div class="mb-4">
+        <h4 class="mb-3">
+          <i class="fas fa-piggy-bank text-success"></i> Savings Opportunities
+        </h4>
+        
+        {% for opportunity in savings_opportunities %}
+        <div class="savings-opportunity">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="mb-0 fw-bold">{{ opportunity.title }}</h6>
+            <span class="badge bg-success">Save</span>
+          </div>
+          
+          <div class="savings-amount mb-2">
+            ${{ opportunity.potential_savings|floatformat:2 }}
+          </div>
+          
+          <p class="mb-2 small">{{ opportunity.description }}</p>
+          
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-primary">
+              <i class="fas fa-arrow-right"></i> {{ opportunity.action }}
+            </small>
+            <span class="badge priority-{{ opportunity.priority }}">
+              {{ opportunity.priority|title }}
+            </span>
+          </div>
+        </div>
+        {% empty %}
+        <div class="card">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-piggy-bank fa-3x text-muted mb-3"></i>
+            <h6 class="text-muted">No opportunities found</h6>
+            <p class="small text-muted">Your spending looks optimized!</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- AI Tips -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="card-title mb-0">
+            <i class="fas fa-robot"></i> AI Tips
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="d-flex align-items-center mb-2">
+              <i class="fas fa-chart-line text-primary me-2"></i>
+              <small class="fw-medium">Pattern Recognition</small>
+            </div>
+            <small class="text-muted">AI analyzes your spending patterns to identify trends and anomalies.</small>
+          </div>
+          
+          <div class="mb-3">
+            <div class="d-flex align-items-center mb-2">
+              <i class="fas fa-crystal-ball text-info me-2"></i>
+              <small class="fw-medium">Predictive Analytics</small>
+            </div>
+            <small class="text-muted">Future spending predictions based on historical data and trends.</small>
+          </div>
+          
+          <div class="mb-3">
+            <div class="d-flex align-items-center mb-2">
+              <i class="fas fa-lightbulb text-warning me-2"></i>
+              <small class="fw-medium">Smart Recommendations</small>
+            </div>
+            <small class="text-muted">Personalized suggestions to optimize your financial health.</small>
+          </div>
+          
+          <div>
+            <div class="d-flex align-items-center mb-2">
+              <i class="fas fa-shield-alt text-success me-2"></i>
+              <small class="fw-medium">Privacy First</small>
+            </div>
+            <small class="text-muted">All analysis is performed locally. Your data never leaves your device.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate confidence bars
+    const confidenceBars = document.querySelectorAll('.confidence-fill');
+    confidenceBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+    
+    // Animate category bars
+    const categoryBars = document.querySelectorAll('.category-fill');
+    categoryBars.forEach((bar, index) => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 800 + (index * 200));
+    });
+    
+    // Animate insight cards
+    const insightCards = document.querySelectorAll('.insight-card');
+    insightCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 300 + (index * 150));
+    });
+    
+    // Animate prediction cards
+    const predictionCards = document.querySelectorAll('.prediction-card');
+    predictionCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateX(0)';
+        }, 600 + (index * 200));
+    });
+    
+    // Animate savings opportunities
+    const savingsCards = document.querySelectorAll('.savings-opportunity');
+    savingsCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+        }, 1000 + (index * 150));
+    });
+});
+</script>
+{% endblock %}

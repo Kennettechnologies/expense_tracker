@@ -1,0 +1,667 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block extra_css %}
+<style>
+  .search-container {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+  }
+  
+  .search-form {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+  
+  .autocomplete-container {
+    position: relative;
+  }
+  
+  .autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+  }
+  
+  .autocomplete-suggestion {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    color: #333;
+  }
+  
+  .autocomplete-suggestion:hover,
+  .autocomplete-suggestion.active {
+    background-color: #f8f9fa;
+  }
+  
+  .autocomplete-suggestion:last-child {
+    border-bottom: none;
+  }
+  
+  .recent-search {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .recent-search:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .filter-chip {
+    display: inline-block;
+    background: #007bff;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    margin: 0.25rem;
+  }
+  
+  .filter-chip .remove {
+    margin-left: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .search-stats {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .transaction-card {
+    border: none;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  
+  .transaction-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  
+  .transaction-type-income {
+    border-left: 4px solid #28a745;
+  }
+  
+  .transaction-type-expense {
+    border-left: 4px solid #dc3545;
+  }
+  
+  .transaction-type-transfer {
+    border-left: 4px solid #ffc107;
+  }
+  
+  .search-input-group {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  
+  .search-input-group .form-control {
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    padding-right: 40px;
+  }
+  
+  .search-input-group .form-control::placeholder {
+    color: rgba(255,255,255,0.7);
+  }
+  
+  .search-input-group .form-control:focus {
+    border-color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.2);
+    box-shadow: none;
+  }
+  
+  .search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.7);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Search Header -->
+  <div class="search-container">
+    <h1 class="h3 mb-3">
+      <i class="fas fa-search"></i> Advanced Search
+    </h1>
+    <p class="mb-4">Find transactions with powerful filters and autocomplete suggestions</p>
+    
+    <!-- Search Form -->
+    <form method="get" class="search-form" id="searchForm">
+      <div class="row">
+        <!-- Main Search Query -->
+        <div class="col-md-6 mb-3">
+          <div class="search-input-group autocomplete-container">
+            <input type="text" 
+                   class="form-control" 
+                   name="q" 
+                   value="{{ search_params.q }}" 
+                   placeholder="Search descriptions, categories, accounts..."
+                   id="mainSearch"
+                   autocomplete="off">
+            <i class="fas fa-search search-icon"></i>
+            <div class="autocomplete-suggestions" id="mainSuggestions"></div>
+          </div>
+        </div>
+        
+        <!-- Category Filter -->
+        <div class="col-md-3 mb-3">
+          <select class="form-select" name="category" style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if search_params.category == category.id|stringformat:"s" %}selected{% endif %}>
+              {{ category.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Account Filter -->
+        <div class="col-md-3 mb-3">
+          <select class="form-select" name="account" style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            <option value="">All Accounts</option>
+            {% for account in accounts %}
+            <option value="{{ account.id }}" {% if search_params.account == account.id|stringformat:"s" %}selected{% endif %}>
+              {{ account.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      
+      <div class="row">
+        <!-- Transaction Type -->
+        <div class="col-md-2 mb-3">
+          <select class="form-select" name="type" style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            <option value="">All Types</option>
+            <option value="income" {% if search_params.type == 'income' %}selected{% endif %}>Income</option>
+            <option value="expense" {% if search_params.type == 'expense' %}selected{% endif %}>Expense</option>
+            <option value="transfer" {% if search_params.type == 'transfer' %}selected{% endif %}>Transfer</option>
+          </select>
+        </div>
+        
+        <!-- Date Range -->
+        <div class="col-md-2 mb-3">
+          <input type="date" 
+                 class="form-control" 
+                 name="date_from" 
+                 value="{{ search_params.date_from }}" 
+                 placeholder="From Date"
+                 style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+        </div>
+        
+        <div class="col-md-2 mb-3">
+          <input type="date" 
+                 class="form-control" 
+                 name="date_to" 
+                 value="{{ search_params.date_to }}" 
+                 placeholder="To Date"
+                 style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+        </div>
+        
+        <!-- Amount Range -->
+        <div class="col-md-2 mb-3">
+          <input type="number" 
+                 class="form-control" 
+                 name="amount_min" 
+                 value="{{ search_params.amount_min }}" 
+                 placeholder="Min Amount"
+                 step="0.01"
+                 style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+        </div>
+        
+        <div class="col-md-2 mb-3">
+          <input type="number" 
+                 class="form-control" 
+                 name="amount_max" 
+                 value="{{ search_params.amount_max }}" 
+                 placeholder="Max Amount"
+                 step="0.01"
+                 style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+        </div>
+        
+        <!-- Sort -->
+        <div class="col-md-2 mb-3">
+          <select class="form-select" name="sort" style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            <option value="-date" {% if search_params.sort == '-date' %}selected{% endif %}>Newest First</option>
+            <option value="date" {% if search_params.sort == 'date' %}selected{% endif %}>Oldest First</option>
+            <option value="-amount" {% if search_params.sort == '-amount' %}selected{% endif %}>Highest Amount</option>
+            <option value="amount" {% if search_params.sort == 'amount' %}selected{% endif %}>Lowest Amount</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Tags -->
+      <div class="row">
+        <div class="col-md-8 mb-3">
+          <div class="autocomplete-container">
+            <input type="text" 
+                   class="form-control" 
+                   name="tags" 
+                   value="{{ search_params.tags }}" 
+                   placeholder="Tags (comma-separated)"
+                   id="tagsSearch"
+                   autocomplete="off"
+                   style="border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+            <div class="autocomplete-suggestions" id="tagsSuggestions"></div>
+          </div>
+        </div>
+        
+        <!-- Search Buttons -->
+        <div class="col-md-4 mb-3">
+          <button type="submit" class="btn btn-light me-2">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <a href="{% url 'advanced_search' %}" class="btn btn-outline-light">
+            <i class="fas fa-times"></i> Clear
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="row">
+    <!-- Search Results -->
+    <div class="col-lg-9">
+      {% if total_results is not None %}
+      <div class="search-stats">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-1">Search Results</h5>
+            <p class="mb-0 text-muted">Found {{ total_results }} transaction{{ total_results|pluralize }}</p>
+          </div>
+          <div>
+            {% if search_params.q or search_params.category or search_params.account or search_params.type %}
+            <div class="d-flex flex-wrap">
+              {% if search_params.q %}
+              <span class="filter-chip">
+                Query: "{{ search_params.q }}"
+                <span class="remove" onclick="removeFilter('q')">&times;</span>
+              </span>
+              {% endif %}
+              {% if search_params.category %}
+              <span class="filter-chip">
+                Category
+                <span class="remove" onclick="removeFilter('category')">&times;</span>
+              </span>
+              {% endif %}
+              {% if search_params.account %}
+              <span class="filter-chip">
+                Account
+                <span class="remove" onclick="removeFilter('account')">&times;</span>
+              </span>
+              {% endif %}
+              {% if search_params.type %}
+              <span class="filter-chip">
+                Type: {{ search_params.type|title }}
+                <span class="remove" onclick="removeFilter('type')">&times;</span>
+              </span>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Transaction Results -->
+      {% for transaction in transactions %}
+      <div class="card transaction-card transaction-type-{{ transaction.trans_type }}">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-2">
+              <div class="fw-bold">{{ transaction.date }}</div>
+              {% if transaction.time %}
+              <small class="text-muted">{{ transaction.time }}</small>
+              {% endif %}
+            </div>
+            <div class="col-md-2">
+              <span class="badge bg-{% if transaction.trans_type == 'income' %}success{% elif transaction.trans_type == 'expense' %}danger{% else %}warning{% endif %}">
+                {{ transaction.get_trans_type_display }}
+              </span>
+            </div>
+            <div class="col-md-2">
+              <div class="fw-bold text-{% if transaction.trans_type == 'income' %}success{% elif transaction.trans_type == 'expense' %}danger{% else %}warning{% endif %}">
+                ${{ transaction.amount }}
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="fw-medium">{{ transaction.description|truncatechars:50 }}</div>
+              <small class="text-muted">
+                {{ transaction.category.name|default:"Uncategorized" }} • {{ transaction.account.name|default:"N/A" }}
+              </small>
+            </div>
+            <div class="col-md-2">
+              {% if transaction.tags %}
+              <div class="small">
+                {% for tag in transaction.tags|split:"," %}
+                <span class="badge bg-secondary me-1">{{ tag|trim }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-md-1">
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="{% url 'transaction_edit' transaction.pk %}">
+                    <i class="fas fa-edit"></i> Edit
+                  </a></li>
+                  <li><a class="dropdown-item" href="{% url 'transaction_duplicate' transaction.pk %}">
+                    <i class="fas fa-copy"></i> Duplicate
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="{% url 'transaction_delete' transaction.pk %}">
+                    <i class="fas fa-trash"></i> Delete
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      {% if total_results is not None %}
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-search fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No transactions found</h5>
+          <p class="text-muted">Try adjusting your search criteria or filters.</p>
+        </div>
+      </div>
+      {% else %}
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="fas fa-search fa-3x text-primary mb-3"></i>
+          <h5>Advanced Search</h5>
+          <p class="text-muted">Use the search form above to find specific transactions with powerful filters and autocomplete.</p>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+      
+      <!-- Pagination -->
+      {% if transactions.has_other_pages %}
+      <nav aria-label="Search results pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if transactions.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ transactions.previous_page_number }}">Previous</a>
+            </li>
+          {% endif %}
+          
+          {% for num in transactions.paginator.page_range %}
+            {% if transactions.number == num %}
+              <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+              </li>
+            {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ num }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if transactions.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ transactions.next_page_number }}">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <!-- Recent Searches -->
+      {% if recent_searches %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="card-title mb-0">Recent Searches</h6>
+        </div>
+        <div class="card-body">
+          {% for search in recent_searches %}
+          <div class="recent-search" onclick="applyRecentSearch({{ search|safe }})">
+            <div class="fw-medium">
+              {% if search.query %}
+              "{{ search.query }}"
+              {% else %}
+              Advanced Filter
+              {% endif %}
+            </div>
+            <small class="text-muted">
+              {% if search.category_id %}Category • {% endif %}
+              {% if search.account_id %}Account • {% endif %}
+              {% if search.type %}{{ search.type|title }} • {% endif %}
+              {{ search.timestamp|date:"M d, H:i" }}
+            </small>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Search Tips -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="card-title mb-0">Search Tips</h6>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2">
+              <i class="fas fa-lightbulb text-warning"></i>
+              <small>Use quotes for exact phrases: "coffee shop"</small>
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-tags text-info"></i>
+              <small>Separate multiple tags with commas</small>
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-calendar text-success"></i>
+              <small>Use date ranges to narrow results</small>
+            </li>
+            <li class="mb-2">
+              <i class="fas fa-dollar-sign text-primary"></i>
+              <small>Set amount ranges for specific spending</small>
+            </li>
+            <li>
+              <i class="fas fa-keyboard text-secondary"></i>
+              <small>Press Tab for autocomplete suggestions</small>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Autocomplete functionality
+    const searchInputs = [
+        { input: 'mainSearch', suggestions: 'mainSuggestions', type: 'description' },
+        { input: 'tagsSearch', suggestions: 'tagsSuggestions', type: 'tags' }
+    ];
+    
+    searchInputs.forEach(({ input, suggestions, type }) => {
+        const inputElement = document.getElementById(input);
+        const suggestionsElement = document.getElementById(suggestions);
+        let currentSuggestions = [];
+        let selectedIndex = -1;
+        
+        inputElement.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query.length < 2) {
+                suggestionsElement.style.display = 'none';
+                return;
+            }
+            
+            // Fetch suggestions
+            fetch(`{% url 'advanced_search' %}?q=${encodeURIComponent(query)}&type=${type}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                currentSuggestions = data.suggestions;
+                displaySuggestions(suggestionsElement, currentSuggestions);
+            })
+            .catch(error => console.error('Autocomplete error:', error));
+        });
+        
+        inputElement.addEventListener('keydown', function(e) {
+            if (suggestionsElement.style.display === 'none') return;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, currentSuggestions.length - 1);
+                updateSelection(suggestionsElement);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection(suggestionsElement);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0) {
+                    selectSuggestion(inputElement, currentSuggestions[selectedIndex], suggestionsElement);
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsElement.style.display = 'none';
+                selectedIndex = -1;
+            }
+        });
+        
+        inputElement.addEventListener('blur', function() {
+            // Delay hiding to allow click on suggestions
+            setTimeout(() => {
+                suggestionsElement.style.display = 'none';
+                selectedIndex = -1;
+            }, 200);
+        });
+    });
+    
+    function displaySuggestions(container, suggestions) {
+        container.innerHTML = '';
+        if (suggestions.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        suggestions.forEach((suggestion, index) => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-suggestion';
+            div.textContent = suggestion;
+            div.addEventListener('click', function() {
+                const input = container.previousElementSibling;
+                selectSuggestion(input, suggestion, container);
+            });
+            container.appendChild(div);
+        });
+        
+        container.style.display = 'block';
+    }
+    
+    function updateSelection(container) {
+        const suggestions = container.querySelectorAll('.autocomplete-suggestion');
+        suggestions.forEach((suggestion, index) => {
+            suggestion.classList.toggle('active', index === selectedIndex);
+        });
+    }
+    
+    function selectSuggestion(input, suggestion, container) {
+        if (input.id === 'tagsSearch') {
+            // For tags, append to existing value
+            const currentValue = input.value;
+            const lastCommaIndex = currentValue.lastIndexOf(',');
+            if (lastCommaIndex >= 0) {
+                input.value = currentValue.substring(0, lastCommaIndex + 1) + ' ' + suggestion;
+            } else {
+                input.value = suggestion;
+            }
+        } else {
+            input.value = suggestion;
+        }
+        container.style.display = 'none';
+        selectedIndex = -1;
+    }
+});
+
+// Filter management
+function removeFilter(filterName) {
+    const form = document.getElementById('searchForm');
+    const input = form.querySelector(`[name="${filterName}"]`);
+    if (input) {
+        if (input.type === 'select-one') {
+            input.selectedIndex = 0;
+        } else {
+            input.value = '';
+        }
+        form.submit();
+    }
+}
+
+// Recent search application
+function applyRecentSearch(searchData) {
+    const form = document.getElementById('searchForm');
+    
+    // Apply search parameters
+    Object.keys(searchData).forEach(key => {
+        if (key !== 'timestamp') {
+            const input = form.querySelector(`[name="${key}"]`);
+            if (input && searchData[key]) {
+                input.value = searchData[key];
+            }
+        }
+    });
+    
+    form.submit();
+}
+
+// Auto-submit on filter change
+document.querySelectorAll('select[name="category"], select[name="account"], select[name="type"], select[name="sort"]').forEach(select => {
+    select.addEventListener('change', function() {
+        document.getElementById('searchForm').submit();
+    });
+});
+</script>
+{% endblock %}

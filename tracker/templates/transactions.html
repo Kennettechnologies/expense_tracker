@@ -1,0 +1,117 @@
+{% extends 'base.html' %} {% block content %}
+<div class="d-flex justify-content-between align-items-center">
+  <h2>Transactions</h2>
+  <div>
+    <a class="btn btn-sm btn-success" href="{% url 'transaction_create' %}"
+      >New</a
+    >
+    <a class="btn btn-sm btn-outline-primary ms-2" href="{% url 'export_csv' %}"
+      >Export CSV</a
+    >
+    <a
+      class="btn btn-sm btn-outline-secondary ms-2"
+      href="{% url 'import_csv' %}"
+      >Import CSV</a
+    >
+  </div>
+</div>
+
+<form method="get" class="row g-2 my-3">
+  <div class="col-md-3">
+    <input
+      name="q"
+      value="{{ request.GET.q }}"
+      class="form-control"
+      placeholder="Search description"
+    />
+  </div>
+  <div class="col-md-2">
+    <select name="type" class="form-select">
+      <option value="">All types</option>
+      <option value="expense">Expense</option>
+      <option value="income">Income</option>
+      <option value="transfer">Transfer</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <input
+      name="from"
+      type="date"
+      class="form-control"
+      value="{{ request.GET.from }}"
+    />
+  </div>
+  <div class="col-md-2">
+    <input
+      name="to"
+      type="date"
+      class="form-control"
+      value="{{ request.GET.to }}"
+    />
+  </div>
+  <div class="col-md-1"><button class="btn btn-secondary">Filter</button></div>
+</form>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Amount</th>
+      <th>Category</th>
+      <th>Account</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in transactions %}
+    <tr>
+      <td>{{ t.date }} {{ t.time }}</td>
+      <td>{{ t.get_trans_type_display }}</td>
+      <td>{{ t.amount }}</td>
+      <td>
+        {% if t.splits.all %}Multiple{% else %}{{ t.category }}{% endif %}
+      </td>
+      <td>{{ t.account }}</td>
+      <td>
+        <a
+          class="btn btn-sm btn-primary"
+          href="{% url 'transaction_edit' t.pk %}"
+          >Edit</a
+        >
+        <a
+          class="btn btn-sm btn-outline-secondary"
+          href="{% url 'transaction_duplicate' t.pk %}"
+          >Duplicate</a
+        >
+        <a
+          class="btn btn-sm btn-outline-info"
+          href="{% url 'split_create' t.pk %}"
+          >Split</a
+        >
+        <a
+          class="btn btn-sm btn-danger"
+          href="{% url 'transaction_delete' t.pk %}"
+          >Delete</a
+        >
+      </td>
+    </tr>
+    {% if t.splits.count %}
+    <tr class="table-sm bg-light">
+      <td colspan="6">
+        <strong>Splits:</strong>
+        <ul class="mb-0">
+          {% for s in t.splits.all %}
+          <li>{{ s.category }} — {{ s.amount }}</li>
+          {% endfor %}
+        </ul>
+      </td>
+    </tr>
+    {% endif %} {% empty %}
+    <tr>
+      <td colspan="6">No transactions yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

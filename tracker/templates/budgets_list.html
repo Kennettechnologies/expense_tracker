@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Budgets <a class="btn btn-sm btn-success" href="{% url 'budget_create' %}">New Budget</a></h2>
+<table class="table">
+  <thead><tr><th>Name</th><th>Category</th><th>Amount</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for b in budgets %}
+    <tr>
+      <td>{{ b.name }}</td>
+      <td>{{ b.category }}</td>
+      <td>{{ b.amount }}</td>
+      <td>
+        <a class="btn btn-sm btn-primary" href="{% url 'budget_edit' b.pk %}">Edit</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'budget_delete' b.pk %}">Delete</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">No budgets set.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Expense Tracker</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="{% static 'css/style.css' %}" rel="stylesheet" />
+    
+    <style>
+      /* Dark Mode Styles */
+      .dark-theme {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .navbar {
+        background-color: #1e1e1e !important;
+        border-bottom: 1px solid #333;
+      }
+      
+      .dark-theme .navbar-light .navbar-brand,
+      .dark-theme .navbar-light .nav-link,
+      .dark-theme .dropdown-item {
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .dropdown-menu {
+        background-color: #2d2d2d !important;
+        border: 1px solid #444;
+      }
+      
+      .dark-theme .dropdown-item:hover {
+        background-color: #3d3d3d !important;
+        color: #ffffff !important;
+      }
+      
+      .dark-theme .card {
+        background-color: #1e1e1e !important;
+        border-color: #333 !important;
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .card-header {
+        background-color: #2d2d2d !important;
+        border-bottom: 1px solid #444;
+      }
+      
+      .dark-theme .form-control,
+      .dark-theme .form-select {
+        background-color: #2d2d2d !important;
+        border-color: #444 !important;
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .form-control:focus,
+      .dark-theme .form-select:focus {
+        background-color: #333 !important;
+        border-color: #666 !important;
+        color: #ffffff !important;
+      }
+      
+      .dark-theme .chart-container {
+        background-color: #1e1e1e !important;
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .quick-actions {
+        background-color: #1e1e1e !important;
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .insight-card {
+        background-color: #2d2d2d !important;
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .alert {
+        background-color: #2d2d2d !important;
+        border-color: #444 !important;
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .table {
+        color: #e0e0e0 !important;
+      }
+      
+      .dark-theme .table th,
+      .dark-theme .table td {
+        border-color: #444 !important;
+      }
+      
+      .dark-theme .bg-light {
+        background-color: #2d2d2d !important;
+      }
+      
+      .dark-theme .text-muted {
+        color: #9e9e9e !important;
+      }
+      
+      .dark-theme .btn-outline-secondary {
+        color: #e0e0e0;
+        border-color: #666;
+      }
+      
+      .dark-theme .btn-outline-secondary:hover {
+        background-color: #3d3d3d;
+        border-color: #888;
+      }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Expense Tracker</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            {% if user.is_authenticated %}
+            <li class="nav-item me-2">
+              <button id="themeToggle" class="btn btn-outline-secondary btn-sm mt-1" onclick="toggleDarkMode()" data-bs-toggle="tooltip" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+              </button>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="dashboardDropdown" role="button" data-bs-toggle="dropdown">
+                Dashboard
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'dashboard' %}">Basic Dashboard</a></li>
+                <li><a class="dropdown-item" href="{% url 'dashboard_enhanced' %}">Enhanced Dashboard</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'financial_health' %}">Financial Health</a></li>
+                <li><a class="dropdown-item" href="{% url 'ai_insights' %}">
+                  <i class="fas fa-brain"></i> AI Insights
+                </a></li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="transactionsDropdown" role="button" data-bs-toggle="dropdown">
+                Transactions
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'transactions' %}">All Transactions</a></li>
+                <li><a class="dropdown-item" href="{% url 'transactions_advanced' %}">Advanced Search</a></li>
+                <li><a class="dropdown-item" href="{% url 'advanced_search' %}">Smart Search</a></li>
+                <li><a class="dropdown-item" href="{% url 'calendar_view' %}">Calendar View</a></li>
+                <li><a class="dropdown-item" href="{% url 'templates' %}">Templates</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'transaction_create' %}">Add Transaction</a></li>
+                {#
+                <li><a class="dropdown-item" href="{% url 'voice_transaction' %}">
+                  <i class="fas fa-microphone"></i> Voice Input
+                </a></li>
+                #}
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="planningDropdown" role="button" data-bs-toggle="dropdown">
+                Planning
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'budgets' %}">Budgets</a></li>
+                <li><a class="dropdown-item" href="{% url 'goals' %}">Savings Goals</a></li>
+                <li><a class="dropdown-item" href="{% url 'bills' %}">Bills & Reminders</a></li>
+                <li><a class="dropdown-item" href="{% url 'recurrings' %}">Recurring</a></li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link position-relative" href="{% url 'notifications' %}">
+                <i class="fas fa-bell"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="display: none;">
+                  0
+                </span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'signup' %}">Sign Up</a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container mt-4">
+      {% if messages %} {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %} {% endif %} {% block content %}{% endblock %}
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Check for saved user preference, if any, on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        // Check for saved theme preference or use system preference
+        if (localStorage.getItem('darkMode') === 'enabled' || 
+            (!localStorage.getItem('darkMode') && 
+             window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.body.classList.add('dark-theme');
+          updateThemeToggle(true);
+        }
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+      });
+      
+      // Toggle dark mode
+      function toggleDarkMode() {
+        document.body.classList.toggle('dark-theme');
+        const isDarkMode = document.body.classList.contains('dark-theme');
+        localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+        updateThemeToggle(isDarkMode);
+      }
+      
+      // Update the theme toggle button state
+      function updateThemeToggle(isDarkMode) {
+        const toggleBtn = document.getElementById('themeToggle');
+        if (toggleBtn) {
+          const icon = toggleBtn.querySelector('i');
+          if (isDarkMode) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            toggleBtn.title = 'Switch to Light Mode';
+          } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+            toggleBtn.title = 'Switch to Dark Mode';
+          }
+        }
+      }
+    </script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

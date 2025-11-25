@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Bill - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{% if form.instance.pk %}Edit{% else %}Add New{% endif %} Bill</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Bill Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.amount.id_for_label }}" class="form-label">Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">KSh</span>
+                                    {{ form.amount }}
+                                </div>
+                                {% if form.amount.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.amount.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.category.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.account.id_for_label }}" class="form-label">Account</label>
+                                {{ form.account }}
+                                {% if form.account.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.account.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.due_date.id_for_label }}" class="form-label">Due Date</label>
+                                {{ form.due_date }}
+                                {% if form.due_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.due_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.frequency.id_for_label }}" class="form-label">Frequency</label>
+                                {{ form.frequency }}
+                                {% if form.frequency.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.frequency.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.reminder_days.id_for_label }}" class="form-label">Remind me (days before)</label>
+                                {{ form.reminder_days }}
+                                {% if form.reminder_days.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.reminder_days.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.auto_pay }}
+                                <label class="form-check-label" for="{{ form.auto_pay.id_for_label }}">
+                                    Enable Auto Pay
+                                </label>
+                                {% if form.auto_pay.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.auto_pay.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Notes</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'bills' %}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Bill</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap classes to form inputs
+        const formInputs = document.querySelectorAll('input:not([type="checkbox"]), textarea, select');
+        formInputs.forEach(input => {
+            input.classList.add('form-control');
+            
+            // Add is-invalid class if field has errors
+            if (input.classList.contains('error')) {
+                input.classList.add('is-invalid');
+            }
+        });
+
+        // Style checkboxes
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.classList.add('form-check-input');
+            checkbox.parentElement.classList.add('form-check');
+            checkbox.nextElementSibling.classList.add('form-check-label');
+        });
+
+        // Initialize date picker if using HTML5 date input
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %}

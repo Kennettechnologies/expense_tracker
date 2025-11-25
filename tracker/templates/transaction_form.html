@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+  .transaction-form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1.25rem;
+  }
+  
+  .form-card {
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    padding: 2.5rem 3rem;
+    margin-bottom: 2.5rem;
+    border: 1px solid #edf2f7;
+  }
+  
+  .form-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #f0f4f8;
+  }
+  
+  .form-title {
+    font-size: 1.75rem;
+    font-weight: 650;
+    color: #1a202c;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .form-title i {
+    color: #667eea;
+  }
+  
+  .form-group {
+    margin-bottom: 1.75rem;
+  }
+  
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+    font-size: 0.95rem;
+    display: block;
+  }
+  
+  .form-control, .form-select {
+    border-radius: 10px;
+    padding: 0.75rem 1.1rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1rem;
+    line-height: 1.5;
+    background-color: #f8fafc;
+    width: 100%;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    background-color: #fff;
+    outline: none;
+  }
+  
+  .input-group-text {
+    background-color: #f0f4f8;
+    border: 1px solid #e2e8f0;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    color: #4a5568;
+    font-weight: 500;
+  }
+  
+  .input-group .form-control {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  
+  .btn {
+    font-weight: 500;
+    border-radius: 10px;
+    padding: 0.75rem 1.75rem;
+    font-size: 1rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    line-height: 1.5;
+  }
+  
+  .btn i {
+    font-size: 1.1em;
+  }
+  
+  .btn-submit {
+    background: #667eea;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.2), 0 2px 4px -1px rgba(102, 126, 234, 0.1);
+  }
+  
+  .btn-submit:hover {
+    background: #5a6fd1;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(102, 126, 234, 0.2), 0 4px 6px -2px rgba(102, 126, 234, 0.1);
+  }
+  
+  .btn-cancel {
+    background: #f8fafc;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .btn-cancel:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    color: #2d3748;
+  }
+  
+  .splits-section {
+    margin-top: 3rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid #f0f4f8;
+  }
+  
+  .splits-section h5 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .splits-section h5 i {
+    color: #667eea;
+  }
+  
+  .splits-table {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    border-collapse: separate;
+    border-spacing: 0 0.75rem;
+  }
+  
+  .splits-table th {
+    font-weight: 500;
+    color: #718096;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.75rem 1.25rem;
+    text-align: left;
+    background-color: #f8fafc;
+    border-bottom: 1px solid #edf2f7;
+  }
+  
+  .splits-table td {
+    padding: 1rem 1.25rem;
+    background: #f8fafc;
+    vertical-align: middle;
+    border: 1px solid #edf2f7;
+    border-style: solid none;
+  }
+  
+  .splits-table tr:first-child td:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-left-style: solid;
+  }
+  
+  .splits-table tr:first-child td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-right-style: solid;
+  }
+  
+  .splits-table tr:hover td {
+    background-color: #f0f5ff;
+  }
+  
+  .btn-sm {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.875rem;
+    border-radius: 8px;
+  }
+  
+  .btn-outline-secondary {
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+    background: white;
+  }
+  
+  .btn-outline-secondary:hover {
+    background: #f8fafc;
+    border-color: #cbd5e0;
+  }
+  
+  .btn-outline-danger {
+    color: #e53e3e;
+    border: 1px solid #fed7d7;
+    background: white;
+  }
+  
+  .btn-outline-danger:hover {
+    background: #fff5f5;
+    border-color: #feb2b2;
+  }
+  
+  .btn-add-split {
+    margin-top: 1rem;
+    color: #667eea;
+    border: 1.5px dashed #c3dafe;
+    background: #f0f5ff;
+    padding: 0.6rem 1.25rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-add-split:hover {
+    background: #e6edff;
+    border-color: #a3bffa;
+    transform: translateY(-1px);
+  }
+  
+  /* File input styling */
+  .form-control[type="file"] {
+    padding: 0.5rem;
+    height: auto;
+    line-height: 1.5;
+  }
+  
+  /* Select dropdown arrow */
+  .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234a5568' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 2.5rem;
+  }
+  
+  /* Form actions */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid #f0f4f8;
+  }
+  
+  @media (max-width: 768px) {
+    .transaction-form-container {
+      padding: 0 0.75rem;
+    }
+    
+    .form-card {
+      padding: 1.75rem 1.25rem;
+      border-radius: 12px;
+    }
+    
+    .form-title {
+      font-size: 1.5rem;
+    }
+    
+    .form-actions {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+    }
+    
+    .splits-table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="transaction-form-container">
+  <div class="form-card">
+    <div class="form-header">
+      <h1 class="form-title">
+        <i class="fas fa-exchange-alt"></i>
+        {% if edit %}Edit Transaction{% else %}New Transaction{% endif %}
+      </h1>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+      {% csrf_token %}
+      
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" for="id_date">
+              <i class="far fa-calendar-alt me-1"></i> Date
+            </label>
+            <div class="position-relative">
+              {{ form.date }}
+              <i class="fas fa-calendar-alt position-absolute" style="right: 1rem; top: 50%; transform: translateY(-50%); color: #a0aec0;"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" for="id_amount">
+              <i class="fas fa-money-bill-wave me-1"></i> Amount
+            </label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              {{ form.amount }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-12">
+          <div class="form-group">
+            <label class="form-label" for="id_description">
+              <i class="fas fa-align-left me-1"></i> Description
+            </label>
+            {{ form.description }}
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" for="id_category">
+              <i class="fas fa-tag me-1"></i> Category
+            </label>
+            {{ form.category }}
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" for="id_trans_type">
+              <i class="fas fa-exchange-alt me-1"></i> Type
+            </label>
+            {{ form.trans_type }}
+          </div>
+        </div>
+        
+        <div class="col-12">
+          <div class="form-group">
+            <label class="form-label" for="id_notes">
+              <i class="far fa-sticky-note me-1"></i> Notes (Optional)
+            </label>
+            {{ form.notes }}
+            <div class="form-text text-muted">Add any additional details about this transaction</div>
+          </div>
+        </div>
+        
+        <div class="col-12">
+          <div class="form-group">
+            <label class="form-label" for="id_receipt">
+              <i class="fas fa-receipt me-1"></i> Receipt (Optional)
+            </label>
+            {{ form.receipt }}
+            <div class="form-text text-muted">Upload a receipt or invoice (PDF, JPG, or PNG)</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <a class="btn btn-cancel" href="{% url 'transactions' %}">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-submit">
+          <i class="fas fa-save"></i> {% if edit %}Update{% else %}Create{% endif %} Transaction
+        </button>
+      </div>
+    </form>
+    
+    {% if edit and splits %}
+    <div class="splits-section">
+      <h5><i class="fas fa-code-branch"></i> Split Details</h5>
+      
+      <div class="table-responsive">
+        <table class="splits-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in splits %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="category-color" style="width: 12px; height: 12px; border-radius: 50%; background-color: #667eea; margin-right: 10px;"></div>
+                  <span>{{ s.category }}</span>
+                </div>
+              </td>
+              <td class="font-medium">${{ s.amount|floatformat:2 }}</td>
+              <td class="text-nowrap">
+                <a class="btn btn-sm btn-outline-secondary me-1" href="{% url 'split_edit' s.pk %}" title="Edit split">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'split_delete' s.pk %}" title="Delete split">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <a class="btn btn-add-split" href="{% url 'split_create' transaction.pk %}">
+        <i class="fas fa-plus"></i> Add Split
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

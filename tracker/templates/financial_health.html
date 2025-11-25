@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  .health-score-display {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .score-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0 auto 1rem;
+    border: 8px solid rgba(255,255,255,0.3);
+    position: relative;
+  }
+  
+  .score-excellent {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  
+  .score-good {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  }
+  
+  .score-fair {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  }
+  
+  .score-poor {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: #333;
+  }
+  
+  .metric-card {
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .metric-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+  
+  .suggestion-card {
+    border-left: 4px solid #007bff;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 0 8px 8px 0;
+  }
+  
+  .suggestion-card.high {
+    border-left-color: #dc3545;
+    background: #fff5f5;
+  }
+  
+  .suggestion-card.medium {
+    border-left-color: #ffc107;
+    background: #fffbf0;
+  }
+  
+  .suggestion-card.low {
+    border-left-color: #28a745;
+    background: #f0fff4;
+  }
+  
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+  
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.35s;
+    transform-origin: 50% 50%;
+  }
+  
+  .breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .breakdown-item:last-child {
+    border-bottom: none;
+  }
+  
+  .breakdown-label {
+    font-weight: 500;
+  }
+  
+  .breakdown-value {
+    font-weight: bold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Financial Health Analysis</h1>
+        <a href="?recalculate=1" class="btn btn-outline-primary">
+          <i class="fas fa-sync-alt"></i> Recalculate Score
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Main Score Display -->
+    <div class="col-lg-4">
+      <div class="health-score-display">
+        <div class="score-circle 
+                    {% if health_score.score >= 80 %}score-excellent
+                    {% elif health_score.score >= 60 %}score-good
+                    {% elif health_score.score >= 40 %}score-fair
+                    {% else %}score-poor{% endif %}">
+          {{ health_score.score }}/100
+        </div>
+        <h4 class="mb-2">
+          {% if health_score.score >= 80 %}Excellent
+          {% elif health_score.score >= 60 %}Good
+          {% elif health_score.score >= 40 %}Fair
+          {% else %}Poor{% endif %}
+          Financial Health
+        </h4>
+        <p class="mb-0">
+          {% if health_score.score >= 80 %}
+            You're doing great! Keep up the excellent financial habits.
+          {% elif health_score.score >= 60 %}
+            You're on the right track. A few improvements can make you even better.
+          {% elif health_score.score >= 40 %}
+            There's room for improvement. Focus on the suggestions below.
+          {% else %}
+            Your financial health needs attention. Start with high-priority suggestions.
+          {% endif %}
+        </p>
+        <small class="text-light">Last updated: {{ health_score.last_calculated|date:"M d, Y" }}</small>
+      </div>
+
+      <!-- Score Breakdown -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Score Breakdown</h5>
+        </div>
+        <div class="card-body">
+          <div class="breakdown-item">
+            <span class="breakdown-label">Savings Rate</span>
+            <span class="breakdown-value">{{ health_score.savings_rate|floatformat:1 }}%</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Budget Adherence</span>
+            <span class="breakdown-value">{{ health_score.budget_adherence|floatformat:1 }}%</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Emergency Fund</span>
+            <span class="breakdown-value">{{ health_score.emergency_fund_months|floatformat:1 }} months</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Account Diversity</span>
+            <span class="breakdown-value">
+              {{ account_count }} account{{ account_count|pluralize }}
+            </span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Active Goals</span>
+            <span class="breakdown-value">
+              {{ active_goals }} goal{{ active_goals|pluralize }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics and Analysis -->
+    <div class="col-lg-8">
+      <!-- Key Metrics -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="metric-card bg-primary text-white">
+            <div class="metric-value">{{ health_score.savings_rate|floatformat:1 }}%</div>
+            <div class="metric-label">Savings Rate</div>
+            <small>
+              {% if health_score.savings_rate >= 20 %}Excellent
+              {% elif health_score.savings_rate >= 10 %}Good
+              {% elif health_score.savings_rate >= 0 %}Fair
+              {% else %}Poor{% endif %}
+            </small>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-card bg-success text-white">
+            <div class="metric-value">{{ health_score.budget_adherence|floatformat:1 }}%</div>
+            <div class="metric-label">Budget Adherence</div>
+            <small>
+              {% if health_score.budget_adherence >= 90 %}Excellent
+              {% elif health_score.budget_adherence >= 75 %}Good
+              {% elif health_score.budget_adherence >= 50 %}Fair
+              {% else %}Poor{% endif %}
+            </small>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metric-card bg-info text-white">
+            <div class="metric-value">{{ health_score.emergency_fund_months|floatformat:1 }}</div>
+            <div class="metric-label">Emergency Fund (Months)</div>
+            <small>
+              {% if health_score.emergency_fund_months >= 6 %}Excellent
+              {% elif health_score.emergency_fund_months >= 3 %}Good
+              {% elif health_score.emergency_fund_months >= 1 %}Fair
+              {% else %}Poor{% endif %}
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Improvement Suggestions -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Improvement Suggestions</h5>
+        </div>
+        <div class="card-body">
+          {% for suggestion in suggestions %}
+          <div class="suggestion-card {{ suggestion.priority }}">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="fw-bold mb-2">
+                  {% if suggestion.priority == 'high' %}
+                    <i class="fas fa-exclamation-circle text-danger"></i>
+                  {% elif suggestion.priority == 'medium' %}
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                  {% else %}
+                    <i class="fas fa-info-circle text-success"></i>
+                  {% endif %}
+                  {{ suggestion.title }}
+                </h6>
+                <p class="mb-0">{{ suggestion.description }}</p>
+              </div>
+              <span class="badge bg-{{ suggestion.priority }} ms-2">
+                {{ suggestion.priority|title }}
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-4">
+            <i class="fas fa-trophy fa-3x text-success mb-3"></i>
+            <h5 class="text-success">Excellent Financial Health!</h5>
+            <p class="text-muted">You're doing great! Keep up the good work.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Financial Health Tips -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Financial Health Tips</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6><i class="fas fa-piggy-bank text-primary"></i> Savings</h6>
+              <ul class="list-unstyled">
+                <li><small>• Aim to save 20% of your income</small></li>
+                <li><small>• Automate your savings</small></li>
+                <li><small>• Build an emergency fund first</small></li>
+                <li><small>• Set specific savings goals</small></li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6><i class="fas fa-chart-line text-success"></i> Budgeting</h6>
+              <ul class="list-unstyled">
+                <li><small>• Track all expenses</small></li>
+                <li><small>• Review budgets monthly</small></li>
+                <li><small>• Use the 50/30/20 rule</small></li>
+                <li><small>• Cut unnecessary expenses</small></li>
+              </ul>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <h6><i class="fas fa-shield-alt text-info"></i> Emergency Fund</h6>
+              <ul class="list-unstyled">
+                <li><small>• Save 3-6 months of expenses</small></li>
+                <li><small>• Keep in high-yield savings</small></li>
+                <li><small>• Only use for true emergencies</small></li>
+                <li><small>• Replenish after use</small></li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6><i class="fas fa-bullseye text-warning"></i> Goal Setting</h6>
+              <ul class="list-unstyled">
+                <li><small>• Set SMART financial goals</small></li>
+                <li><small>• Break large goals into steps</small></li>
+                <li><small>• Track progress regularly</small></li>
+                <li><small>• Celebrate milestones</small></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score History Chart -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Score Improvement Over Time</h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center py-4">
+            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+            <h6 class="text-muted">Score History Coming Soon</h6>
+            <p class="text-muted">We'll track your financial health score over time to show your progress.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate score circle on load
+    const scoreCircle = document.querySelector('.score-circle');
+    if (scoreCircle) {
+        scoreCircle.style.transform = 'scale(0)';
+        scoreCircle.style.transition = 'transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+        
+        setTimeout(() => {
+            scoreCircle.style.transform = 'scale(1)';
+        }, 300);
+    }
+    
+    // Animate metric cards
+    const metricCards = document.querySelectorAll('.metric-card');
+    metricCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 500 + (index * 100));
+    });
+    
+    // Animate suggestion cards
+    const suggestionCards = document.querySelectorAll('.suggestion-card');
+    suggestionCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateX(0)';
+        }, 800 + (index * 150));
+    });
+});
+</script>
+{% endblock %}

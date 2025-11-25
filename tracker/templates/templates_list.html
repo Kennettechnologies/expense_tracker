@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block extra_css %}
+<style>
+  .template-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .template-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+  
+  .template-type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .use-count {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  .quick-use-btn {
+    background: linear-gradient(45deg, #11998e, #38ef7d);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  .quick-use-btn:hover {
+    background: linear-gradient(45deg, #0d7377, #2dd4bf);
+    transform: scale(1.05);
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Transaction Templates</h2>
+    <p class="text-muted mb-0">Save frequently used transactions for quick entry</p>
+  </div>
+  <a href="{% url 'template_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Create Template
+  </a>
+</div>
+
+{% if templates %}
+  <div class="row">
+    {% for template in templates %}
+      <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card template-card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="card-title mb-0">{{ template.name }}</h5>
+              <span class="badge bg-{{ template.trans_type|yesno:'success,danger,info' }} template-type-badge">
+                {{ template.get_trans_type_display }}
+              </span>
+            </div>
+            
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted">Amount:</span>
+                <strong class="h5 mb-0">${{ template.amount|floatformat:2 }}</strong>
+              </div>
+              
+              {% if template.category %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted">Category:</span>
+                  <span class="badge bg-light text-dark">{{ template.category.name }}</span>
+                </div>
+              {% endif %}
+              
+              {% if template.account %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted">Account:</span>
+                  <span class="text-dark">{{ template.account.name }}</span>
+                </div>
+              {% endif %}
+            </div>
+            
+            {% if template.description %}
+              <p class="card-text text-muted small mb-3">{{ template.description|truncatewords:15 }}</p>
+            {% endif %}
+            
+            {% if template.tags %}
+              <div class="mb-3">
+                {% for tag in template.tags|split:',' %}
+                  <span class="badge bg-secondary me-1">#{{ tag|striptags }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="use-count">
+                <i class="fas fa-chart-line me-1"></i>
+                Used {{ template.use_count }} time{{ template.use_count|pluralize }}
+              </div>
+              
+              <div class="btn-group" role="group">
+                <a href="{% url 'template_use' template.pk %}" class="btn quick-use-btn btn-sm">
+                  <i class="fas fa-bolt me-1"></i>Use Now
+                </a>
+                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                  <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="{% url 'template_use' template.pk %}">
+                    <i class="fas fa-plus me-2"></i>Create Transaction
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="{% url 'template_delete' template.pk %}">
+                    <i class="fas fa-trash me-2"></i>Delete Template
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  
+  <div class="mt-4 p-4 bg-light rounded">
+    <h5><i class="fas fa-lightbulb text-warning me-2"></i>Pro Tips</h5>
+    <ul class="mb-0">
+      <li>Templates save time for recurring expenses like groceries, gas, or coffee</li>
+      <li>Use descriptive names like "Weekly Groceries" or "Monthly Gym Membership"</li>
+      <li>Templates with higher use counts appear first in the list</li>
+      <li>You can edit the transaction after creating it from a template</li>
+    </ul>
+  </div>
+  
+{% else %}
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i class="fas fa-clipboard-list fa-4x text-muted"></i>
+    </div>
+    <h4 class="text-muted mb-3">No Templates Yet</h4>
+    <p class="text-muted mb-4">Create your first transaction template to speed up data entry for frequent transactions.</p>
+    <a href="{% url 'template_create' %}" class="btn btn-primary btn-lg">
+      <i class="fas fa-plus me-2"></i>Create Your First Template
+    </a>
+  </div>
+{% endif %}
+{% endblock %}

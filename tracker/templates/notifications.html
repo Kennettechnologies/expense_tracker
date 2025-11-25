@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  .notification-card {
+    border-left: 4px solid #007bff;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .notification-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  
+  .notification-card.unread {
+    background-color: #f8f9fa;
+  }
+  
+  .notification-card.budget_alert {
+    border-left-color: #dc3545;
+  }
+  
+  .notification-card.bill_reminder {
+    border-left-color: #ffc107;
+  }
+  
+  .notification-card.goal_milestone {
+    border-left-color: #28a745;
+  }
+  
+  .notification-card.unusual_spending {
+    border-left-color: #fd7e14;
+  }
+  
+  .notification-card.monthly_summary {
+    border-left-color: #6f42c1;
+  }
+  
+  .priority-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .priority-urgent {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .priority-high {
+    background-color: #fd7e14;
+    color: white;
+  }
+  
+  .priority-medium {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .priority-low {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+  }
+  
+  .icon-budget_alert {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+  
+  .icon-bill_reminder {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+  }
+  
+  .icon-goal_milestone {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+  }
+  
+  .icon-unusual_spending {
+    background-color: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+  }
+  
+  .icon-monthly_summary {
+    background-color: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Notifications</h1>
+        <div>
+          <form method="post" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="mark_all_read" value="1">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+              <i class="fas fa-check-double"></i> Mark All Read
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Notification Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="filter" id="all" checked>
+                <label class="btn btn-outline-primary" for="all">All</label>
+                
+                <input type="radio" class="btn-check" name="filter" id="unread">
+                <label class="btn btn-outline-primary" for="unread">Unread</label>
+                
+                <input type="radio" class="btn-check" name="filter" id="read">
+                <label class="btn btn-outline-primary" for="read">Read</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <select class="form-select" id="typeFilter">
+                <option value="">All Types</option>
+                <option value="budget_alert">Budget Alerts</option>
+                <option value="bill_reminder">Bill Reminders</option>
+                <option value="goal_milestone">Goal Milestones</option>
+                <option value="unusual_spending">Unusual Spending</option>
+                <option value="monthly_summary">Monthly Summary</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications List -->
+      <div id="notificationsList">
+        {% for notification in notifications %}
+        <div class="card notification-card {{ notification.notification_type }} {% if not notification.is_read %}unread{% endif %}"
+             data-type="{{ notification.notification_type }}" 
+             data-read="{{ notification.is_read|yesno:'true,false' }}">
+          <div class="card-body">
+            <div class="d-flex align-items-start">
+              <div class="notification-icon icon-{{ notification.notification_type }}">
+                {% if notification.notification_type == 'budget_alert' %}
+                  <i class="fas fa-exclamation-triangle"></i>
+                {% elif notification.notification_type == 'bill_reminder' %}
+                  <i class="fas fa-file-invoice-dollar"></i>
+                {% elif notification.notification_type == 'goal_milestone' %}
+                  <i class="fas fa-trophy"></i>
+                {% elif notification.notification_type == 'unusual_spending' %}
+                  <i class="fas fa-chart-line"></i>
+                {% elif notification.notification_type == 'monthly_summary' %}
+                  <i class="fas fa-calendar-alt"></i>
+                {% else %}
+                  <i class="fas fa-bell"></i>
+                {% endif %}
+              </div>
+              
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h6 class="mb-0 fw-bold">{{ notification.title }}</h6>
+                  <div class="d-flex align-items-center">
+                    <span class="badge priority-{{ notification.priority }} priority-badge me-2">
+                      {{ notification.get_priority_display }}
+                    </span>
+                    {% if not notification.is_read %}
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="notification_id" value="{{ notification.id }}">
+                      <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as read">
+                        <i class="fas fa-check"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </div>
+                
+                <p class="mb-2 text-muted">{{ notification.message }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    <i class="fas fa-clock"></i> {{ notification.created_at|timesince }} ago
+                  </small>
+                  <span class="badge bg-light text-dark">
+                    {{ notification.get_notification_type_display }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No notifications yet</h5>
+            <p class="text-muted">You'll see important updates and alerts here.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if notifications.has_other_pages %}
+      <nav aria-label="Notifications pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if notifications.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ notifications.previous_page_number }}">Previous</a>
+            </li>
+          {% endif %}
+          
+          {% for num in notifications.paginator.page_range %}
+            {% if notifications.number == num %}
+              <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+              </li>
+            {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if notifications.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ notifications.next_page_number }}">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('input[name="filter"]');
+    const typeFilter = document.getElementById('typeFilter');
+    const notificationCards = document.querySelectorAll('.notification-card');
+    
+    function filterNotifications() {
+        const readFilter = document.querySelector('input[name="filter"]:checked').id;
+        const typeFilterValue = typeFilter.value;
+        
+        notificationCards.forEach(card => {
+            let showCard = true;
+            
+            // Filter by read status
+            if (readFilter === 'unread' && card.dataset.read === 'true') {
+                showCard = false;
+            } else if (readFilter === 'read' && card.dataset.read === 'false') {
+                showCard = false;
+            }
+            
+            // Filter by type
+            if (typeFilterValue && card.dataset.type !== typeFilterValue) {
+                showCard = false;
+            }
+            
+            card.style.display = showCard ? 'block' : 'none';
+        });
+        
+        // Show message if no notifications match filter
+        const visibleCards = Array.from(notificationCards).filter(card => 
+            card.style.display !== 'none'
+        );
+        
+        const noResultsMessage = document.getElementById('noResults');
+        if (visibleCards.length === 0 && !noResultsMessage) {
+            const message = document.createElement('div');
+            message.id = 'noResults';
+            message.className = 'card';
+            message.innerHTML = `
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No notifications match your filter</h5>
+                    <p class="text-muted">Try adjusting your filter criteria.</p>
+                </div>
+            `;
+            document.getElementById('notificationsList').appendChild(message);
+        } else if (visibleCards.length > 0 && noResultsMessage) {
+            noResultsMessage.remove();
+        }
+    }
+    
+    // Add event listeners
+    filterButtons.forEach(button => {
+        button.addEventListener('change', filterNotifications);
+    });
+    
+    typeFilter.addEventListener('change', filterNotifications);
+    
+    // Auto-refresh notifications every 30 seconds
+    setInterval(function() {
+        // Only refresh if user is actively viewing the page
+        if (!document.hidden) {
+            fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Update notification count in navbar if it exists
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newNotifications = doc.querySelectorAll('.notification-card');
+                
+                if (newNotifications.length !== notificationCards.length) {
+                    // New notifications available, show indicator
+                    const refreshBtn = document.createElement('button');
+                    refreshBtn.className = 'btn btn-info btn-sm position-fixed';
+                    refreshBtn.style.cssText = 'top: 20px; right: 20px; z-index: 1050;';
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> New notifications';
+                    refreshBtn.onclick = () => window.location.reload();
+                    document.body.appendChild(refreshBtn);
+                }
+            })
+            .catch(error => console.log('Auto-refresh failed:', error));
+        }
+    }, 30000);
+});
+</script>
+{% endblock %}

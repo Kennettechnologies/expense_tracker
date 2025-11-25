@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Add Split for Transaction {{ transaction.id }}</h2>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-primary" type="submit">Add Split</button>
+  <a class="btn btn-secondary" href="{% url 'transaction_edit' transaction.pk %}">Back</a>
+</form>
+{% endblock %}

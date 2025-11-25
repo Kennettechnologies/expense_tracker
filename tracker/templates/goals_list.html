@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load math_filters %}
+
+{% block extra_css %}
+<style>
+  .goal-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+  }
+  
+  .goal-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+  
+  .goal-card.completed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+  }
+  
+  .goal-card.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  
+  .goal-card.paused {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    color: #2d3436;
+  }
+  
+  .progress-ring {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .progress-ring-circle {
+    stroke: rgba(255,255,255,0.3);
+    fill: transparent;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+  
+  .progress-ring-progress {
+    stroke: white;
+    fill: transparent;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dasharray 0.5s ease;
+  }
+  
+  .goal-amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .contribute-btn {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .contribute-btn:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+    color: white;
+    transform: scale(1.05);
+  }
+  
+  .days-remaining {
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Savings Goals</h2>
+    <p class="text-muted mb-0">Track your progress towards financial milestones</p>
+  </div>
+  <a href="{% url 'goal_create' %}" class="btn btn-primary">
+    <i class="fas fa-bullseye me-2"></i>Create Goal
+  </a>
+</div>
+
+{% if goals %}
+  <!-- Goal Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <h3 class="text-primary mb-1">{{ goals|length }}</h3>
+        <small class="text-muted">Total Goals</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <h3 class="text-success mb-1">{{ goals|dictsort:"status"|dictsortreversed:"completed"|length }}</h3>
+        <small class="text-muted">Completed</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <h3 class="text-info mb-1">{{ goals|dictsort:"status"|dictsortreversed:"active"|length }}</h3>
+        <small class="text-muted">Active</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3">
+        <h3 class="text-warning mb-1">
+          ${% for goal in goals %}{% if goal.status == 'active' %}{{ goal.current_amount|add:0 }}{% endif %}{% endfor %}
+        </h3>
+        <small class="text-muted">Total Saved</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Goals Grid -->
+  <div class="row">
+    {% for goal in goals %}
+      <div class="col-lg-6 col-xl-4 mb-4">
+        <div class="card goal-card {{ goal.status }} h-100">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5 class="card-title mb-1">{{ goal.name }}</h5>
+                {% if goal.target_date %}
+                  {% now "Y-m-d" as today %}
+                  {% if goal.target_date|date:"Y-m-d" >= today %}
+                    <div class="days-remaining">
+                      <i class="fas fa-calendar me-1"></i>
+                      {{ goal.target_date|timeuntil }} remaining
+                    </div>
+                  {% else %}
+                    <div class="days-remaining">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      Overdue
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+              
+              <!-- Progress Ring -->
+              <div class="progress-ring">
+                <svg class="progress-ring" width="80" height="80">
+                  <circle class="progress-ring-circle" cx="40" cy="40" r="32"></circle>
+                  <circle class="progress-ring-progress" cx="40" cy="40" r="32" 
+                          style="stroke-dasharray: {{ goal.progress_percentage|floatformat:0|mul:2.01|floatformat:2 }} 201.06;"></circle>
+                </svg>
+                <div class="position-absolute top-50 start-50 translate-middle text-center">
+                  <div class="fw-bold">{{ goal.progress_percentage|floatformat:0 }}%</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="opacity-75">Current:</span>
+                <span class="goal-amount">${{ goal.current_amount|floatformat:2 }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="opacity-75">Target:</span>
+                <span class="fw-bold">${{ goal.target_amount|floatformat:2 }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="opacity-75">Remaining:</span>
+                <span class="fw-bold">${{ goal.remaining_amount|floatformat:2 }}</span>
+              </div>
+            </div>
+            
+            {% if goal.description %}
+              <p class="small opacity-75 mb-3">{{ goal.description|truncatewords:20 }}</p>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between align-items-center">
+              {% if goal.status == 'completed' %}
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-trophy me-2"></i>
+                  <span class="fw-bold">Goal Completed!</span>
+                </div>
+                <small class="opacity-75">{{ goal.completed_at|date:"M d, Y" }}</small>
+              {% elif goal.status == 'active' %}
+                <a href="{% url 'goal_contribute' goal.pk %}" class="btn contribute-btn">
+                  <i class="fas fa-plus me-2"></i>Add Money
+                </a>
+                <div class="dropdown">
+                  <button class="btn btn-link text-white p-0" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'goal_contribute' goal.pk %}">
+                      <i class="fas fa-plus me-2"></i>Add Contribution
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'goal_delete' goal.pk %}">
+                      <i class="fas fa-trash me-2"></i>Delete Goal
+                    </a></li>
+                  </ul>
+                </div>
+              {% else %}
+                <span class="badge bg-warning text-dark">Paused</span>
+                <div class="dropdown">
+                  <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item text-danger" href="{% url 'goal_delete' goal.pk %}">
+                      <i class="fas fa-trash me-2"></i>Delete Goal
+                    </a></li>
+                  </ul>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  
+  <!-- Tips Section -->
+  <div class="mt-4 p-4 bg-light rounded">
+    <h5><i class="fas fa-lightbulb text-warning me-2"></i>Goal Setting Tips</h5>
+    <div class="row">
+      <div class="col-md-6">
+        <ul class="mb-0">
+          <li>Set specific, measurable goals with target dates</li>
+          <li>Break large goals into smaller milestones</li>
+          <li>Automate contributions when possible</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <ul class="mb-0">
+          <li>Review and adjust goals regularly</li>
+          <li>Celebrate when you reach milestones</li>
+          <li>Consider both short-term and long-term goals</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+{% else %}
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i class="fas fa-bullseye fa-4x text-muted"></i>
+    </div>
+    <h4 class="text-muted mb-3">No Savings Goals Yet</h4>
+    <p class="text-muted mb-4">Start your financial journey by setting your first savings goal. Whether it's an emergency fund, vacation, or major purchase, tracking your progress helps you stay motivated.</p>
+    <a href="{% url 'goal_create' %}" class="btn btn-primary btn-lg">
+      <i class="fas fa-bullseye me-2"></i>Set Your First Goal
+    </a>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress rings
+    const progressRings = document.querySelectorAll('.progress-ring-progress');
+    progressRings.forEach(ring => {
+        const circumference = 2 * Math.PI * 32;
+        ring.style.strokeDasharray = `0 ${circumference}`;
+        
+        setTimeout(() => {
+            const progress = ring.style.strokeDasharray.split(' ')[0];
+            ring.style.strokeDasharray = ring.getAttribute('style').match(/stroke-dasharray: ([\d.]+)/)[1] + ` ${circumference}`;
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

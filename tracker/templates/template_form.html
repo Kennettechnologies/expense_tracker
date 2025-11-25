@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+          <i class="fas fa-clipboard-list me-2"></i>Create Transaction Template
+        </h4>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.name.id_for_label }}" class="form-label">Template Name *</label>
+              {{ form.name }}
+              {% if form.name.errors %}
+                <div class="text-danger small">{{ form.name.errors }}</div>
+              {% endif %}
+              <div class="form-text">Give your template a descriptive name like "Weekly Groceries"</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.trans_type.id_for_label }}" class="form-label">Transaction Type *</label>
+              {{ form.trans_type }}
+              {% if form.trans_type.errors %}
+                <div class="text-danger small">{{ form.trans_type.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.amount.id_for_label }}" class="form-label">Amount *</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                {{ form.amount }}
+              </div>
+              {% if form.amount.errors %}
+                <div class="text-danger small">{{ form.amount.errors }}</div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+              {{ form.category }}
+              {% if form.category.errors %}
+                <div class="text-danger small">{{ form.category.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="{{ form.account.id_for_label }}" class="form-label">Account</label>
+            {{ form.account }}
+            {% if form.account.errors %}
+              <div class="text-danger small">{{ form.account.errors }}</div>
+            {% endif %}
+          </div>
+          
+          <div class="mb-3">
+            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="text-danger small">{{ form.description.errors }}</div>
+            {% endif %}
+            <div class="form-text">Optional description for this template</div>
+          </div>
+          
+          <div class="mb-4">
+            <label for="{{ form.tags.id_for_label }}" class="form-label">Tags</label>
+            {{ form.tags }}
+            {% if form.tags.errors %}
+              <div class="text-danger small">{{ form.tags.errors }}</div>
+            {% endif %}
+            <div class="form-text">Comma-separated tags like: grocery, food, weekly</div>
+          </div>
+          
+          <div class="d-flex justify-content-between">
+            <a href="{% url 'templates' %}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left me-2"></i>Back to Templates
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-2"></i>Create Template
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <div class="mt-4 alert alert-info">
+      <h6><i class="fas fa-info-circle me-2"></i>About Templates</h6>
+      <p class="mb-0">Templates help you quickly create transactions for expenses that occur regularly. Once created, you can use a template to generate a new transaction with one click, then edit any details as needed.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Bootstrap classes to form fields
+    const formControls = document.querySelectorAll('input, select, textarea');
+    formControls.forEach(function(control) {
+        if (!control.classList.contains('btn')) {
+            control.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

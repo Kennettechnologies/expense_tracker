@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  .bill-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .bill-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+  
+  .bill-card.overdue {
+    border-left: 4px solid #dc3545;
+  }
+  
+  .bill-card.due-soon {
+    border-left: 4px solid #ffc107;
+  }
+  
+  .bill-card.paid {
+    border-left: 4px solid #28a745;
+  }
+  
+  .pay-btn {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  
+  .pay-btn:hover {
+    background: linear-gradient(45deg, #218838, #1ea080);
+    transform: scale(1.05);
+    color: white;
+  }
+  
+  .amount-display {
+    font-size: 1.25rem;
+    font-weight: bold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Bills & Reminders</h2>
+    <p class="text-muted mb-0">Track and manage your recurring bills</p>
+  </div>
+  <a href="{% url 'bill_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Add Bill
+  </a>
+</div>
+
+<!-- Bills Summary -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card text-center p-3">
+      <h3 class="text-warning mb-1">{{ upcoming_bills|length }}</h3>
+      <small class="text-muted">Upcoming</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center p-3">
+      <h3 class="text-danger mb-1">{{ overdue_bills|length }}</h3>
+      <small class="text-muted">Overdue</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center p-3">
+      <h3 class="text-success mb-1">{{ paid_bills|length }}</h3>
+      <small class="text-muted">Recently Paid</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center p-3">
+      <h3 class="text-info mb-1">
+        ${% for bill in upcoming_bills %}{{ bill.amount|add:0 }}{% endfor %}
+      </h3>
+      <small class="text-muted">Total Due</small>
+    </div>
+  </div>
+</div>
+
+<!-- Overdue Bills -->
+{% if overdue_bills %}
+<div class="mb-4">
+  <h4 class="text-danger mb-3">
+    <i class="fas fa-exclamation-triangle me-2"></i>Overdue Bills
+  </h4>
+  <div class="row">
+    {% for bill in overdue_bills %}
+      <div class="col-lg-6 mb-3">
+        <div class="card bill-card overdue">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5 class="card-title mb-1">{{ bill.name }}</h5>
+                <small class="text-danger">
+                  <i class="fas fa-clock me-1"></i>
+                  Due {{ bill.due_date|timesince }} ago
+                </small>
+              </div>
+              <span class="amount-display text-danger">${{ bill.amount|floatformat:2 }}</span>
+            </div>
+            
+            {% if bill.description %}
+              <p class="text-muted small mb-3">{{ bill.description|truncatewords:15 }}</p>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                {% if bill.category %}
+                  <span class="badge bg-light text-dark">{{ bill.category.name }}</span>
+                {% endif %}
+                <span class="badge bg-danger">{{ bill.get_frequency_display }}</span>
+              </div>
+              <div>
+                <a href="{% url 'bill_pay' bill.pk %}" class="btn pay-btn btn-sm">
+                  <i class="fas fa-credit-card me-1"></i>Pay Now
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Upcoming Bills -->
+{% if upcoming_bills %}
+<div class="mb-4">
+  <h4 class="text-warning mb-3">
+    <i class="fas fa-calendar-alt me-2"></i>Upcoming Bills
+  </h4>
+  <div class="row">
+    {% for bill in upcoming_bills %}
+      <div class="col-lg-6 mb-3">
+        <div class="card bill-card {% if bill.days_until_due <= 3 %}due-soon{% endif %}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h5 class="card-title mb-1">{{ bill.name }}</h5>
+                <small class="{% if bill.days_until_due <= 3 %}text-warning{% else %}text-muted{% endif %}">
+                  <i class="fas fa-calendar me-1"></i>
+                  Due {{ bill.due_date|timeuntil }}
+                </small>
+              </div>
+              <span class="amount-display text-primary">${{ bill.amount|floatformat:2 }}</span>
+            </div>
+            
+            {% if bill.description %}
+              <p class="text-muted small mb-3">{{ bill.description|truncatewords:15 }}</p>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                {% if bill.category %}
+                  <span class="badge bg-light text-dark">{{ bill.category.name }}</span>
+                {% endif %}
+                <span class="badge bg-info">{{ bill.get_frequency_display }}</span>
+                {% if bill.auto_pay %}
+                  <span class="badge bg-success">Auto-Pay</span>
+                {% endif %}
+              </div>
+              <div class="btn-group" role="group">
+                <a href="{% url 'bill_pay' bill.pk %}" class="btn pay-btn btn-sm">
+                  <i class="fas fa-credit-card me-1"></i>Pay
+                </a>
+                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                  <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="{% url 'bill_pay' bill.pk %}">
+                    <i class="fas fa-credit-card me-2"></i>Mark as Paid
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="{% url 'bill_delete' bill.pk %}">
+                    <i class="fas fa-trash me-2"></i>Delete Bill
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Recently Paid Bills -->
+{% if paid_bills %}
+<div class="mb-4">
+  <h4 class="text-success mb-3">
+    <i class="fas fa-check-circle me-2"></i>Recently Paid
+  </h4>
+  <div class="row">
+    {% for bill in paid_bills %}
+      <div class="col-lg-6 mb-3">
+        <div class="card bill-card paid">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h6 class="card-title mb-1">{{ bill.name }}</h6>
+                <small class="text-success">
+                  <i class="fas fa-check me-1"></i>
+                  Paid on {{ bill.due_date|date:"M d, Y" }}
+                </small>
+              </div>
+              <span class="text-success fw-bold">${{ bill.amount|floatformat:2 }}</span>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                {% if bill.category %}
+                  <span class="badge bg-light text-dark">{{ bill.category.name }}</span>
+                {% endif %}
+                <span class="badge bg-success">{{ bill.get_frequency_display }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Empty State -->
+{% if not upcoming_bills and not overdue_bills and not paid_bills %}
+<div class="text-center py-5">
+  <div class="mb-4">
+    <i class="fas fa-file-invoice-dollar fa-4x text-muted"></i>
+  </div>
+  <h4 class="text-muted mb-3">No Bills Added Yet</h4>
+  <p class="text-muted mb-4">Start tracking your recurring bills and never miss a payment again. Set up reminders and automate your bill management.</p>
+  <a href="{% url 'bill_create' %}" class="btn btn-primary btn-lg">
+    <i class="fas fa-plus me-2"></i>Add Your First Bill
+  </a>
+</div>
+{% endif %}
+
+<!-- Tips Section -->
+<div class="mt-4 p-4 bg-light rounded">
+  <h5><i class="fas fa-lightbulb text-warning me-2"></i>Bill Management Tips</h5>
+  <div class="row">
+    <div class="col-md-6">
+      <ul class="mb-0">
+        <li>Set reminder days to get notified before due dates</li>
+        <li>Use recurring bills for monthly subscriptions</li>
+        <li>Enable auto-pay for bills with fixed amounts</li>
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <ul class="mb-0">
+        <li>Review and update bill amounts regularly</li>
+        <li>Track payment history for budgeting</li>
+        <li>Set up categories for better expense tracking</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

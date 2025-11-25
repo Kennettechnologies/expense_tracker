@@ -1,0 +1,550 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  .voice-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 3rem;
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .voice-button {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 2.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin: 2rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .voice-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+  }
+  
+  .voice-button.recording {
+    background: #dc3545;
+    border-color: #dc3545;
+    animation: pulse 1.5s infinite;
+  }
+  
+  .voice-button.processing {
+    background: #ffc107;
+    border-color: #ffc107;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .voice-status {
+    font-size: 1.25rem;
+    margin: 1rem 0;
+    min-height: 2rem;
+  }
+  
+  .voice-transcript {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    min-height: 60px;
+    font-style: italic;
+    backdrop-filter: blur(10px);
+  }
+  
+  .voice-result {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    text-align: left;
+  }
+  
+  .voice-examples {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-top: 2rem;
+    color: #333;
+  }
+  
+  .example-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border-left: 4px solid #007bff;
+  }
+  
+  .browser-support {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    color: #856404;
+  }
+  
+  .quick-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .quick-action-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .quick-action-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    text-decoration: none;
+  }
+  
+  .voice-tips {
+    text-align: left;
+    margin-top: 2rem;
+  }
+  
+  .tip-item {
+    display: flex;
+    align-items: center;
+    margin: 0.75rem 0;
+    font-size: 0.95rem;
+  }
+  
+  .tip-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 0.8rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Voice Input Interface -->
+      <div class="voice-container">
+        <h1 class="h2 mb-3">
+          <i class="fas fa-microphone"></i> Voice Transaction
+        </h1>
+        <p class="mb-4">Speak naturally to add transactions. Say things like "I spent 25 dollars on lunch" or "I earned 500 from freelance work"</p>
+        
+        <!-- Voice Button -->
+        <button class="voice-button" id="voiceButton" onclick="toggleRecording()">
+          <i class="fas fa-microphone" id="voiceIcon"></i>
+        </button>
+        
+        <!-- Status Display -->
+        <div class="voice-status" id="voiceStatus">
+          Click the microphone to start recording
+        </div>
+        
+        <!-- Transcript Display -->
+        <div class="voice-transcript" id="voiceTranscript" style="display: none;">
+          <div class="small text-light mb-1">You said:</div>
+          <div id="transcriptText"></div>
+        </div>
+        
+        <!-- Result Display -->
+        <div class="voice-result" id="voiceResult" style="display: none;">
+          <!-- Transaction result will be displayed here -->
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <a href="{% url 'transaction_create' %}" class="quick-action-btn">
+            <i class="fas fa-keyboard"></i> Manual Entry
+          </a>
+          <button class="quick-action-btn" onclick="clearResults()">
+            <i class="fas fa-refresh"></i> Try Again
+          </button>
+          <a href="{% url 'transactions' %}" class="quick-action-btn">
+            <i class="fas fa-list"></i> View All
+          </a>
+        </div>
+        
+        <!-- Voice Tips -->
+        <div class="voice-tips">
+          <div class="tip-item">
+            <div class="tip-icon"><i class="fas fa-lightbulb"></i></div>
+            <div>Speak clearly and include the amount and what it's for</div>
+          </div>
+          <div class="tip-item">
+            <div class="tip-icon"><i class="fas fa-dollar-sign"></i></div>
+            <div>Use words like "spent", "paid", "earned", or "received"</div>
+          </div>
+          <div class="tip-item">
+            <div class="tip-icon"><i class="fas fa-tags"></i></div>
+            <div>Mention categories like "food", "gas", "shopping", or "salary"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Browser Support Warning -->
+      <div class="browser-support" id="browserWarning" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Browser Not Supported:</strong> Voice input requires a modern browser with Web Speech API support. 
+        Please use Chrome, Edge, or Safari for the best experience.
+      </div>
+
+      <!-- Voice Examples -->
+      <div class="voice-examples">
+        <h3 class="mb-3">
+          <i class="fas fa-comments"></i> Example Voice Commands
+        </h3>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <h5 class="text-success mb-3">
+              <i class="fas fa-arrow-down"></i> Expenses
+            </h5>
+            <div class="example-item">
+              <strong>"I spent 15 dollars on lunch"</strong>
+              <div class="small text-muted">Creates: $15 expense in Food category</div>
+            </div>
+            <div class="example-item">
+              <strong>"Paid 45 for gas"</strong>
+              <div class="small text-muted">Creates: $45 expense in Transportation</div>
+            </div>
+            <div class="example-item">
+              <strong>"Bought groceries for 85 dollars"</strong>
+              <div class="small text-muted">Creates: $85 expense in Food category</div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <h5 class="text-primary mb-3">
+              <i class="fas fa-arrow-up"></i> Income
+            </h5>
+            <div class="example-item">
+              <strong>"I earned 500 from freelance work"</strong>
+              <div class="small text-muted">Creates: $500 income in Freelance</div>
+            </div>
+            <div class="example-item">
+              <strong>"Received 2500 salary"</strong>
+              <div class="small text-muted">Creates: $2500 income in Salary</div>
+            </div>
+            <div class="example-item">
+              <strong>"Got 100 dollars from client"</strong>
+              <div class="small text-muted">Creates: $100 income</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4">
+          <h6 class="text-info">
+            <i class="fas fa-magic"></i> Smart Recognition
+          </h6>
+          <p class="small text-muted mb-0">
+            The system automatically detects amounts, transaction types, and categories from your natural speech. 
+            You can speak in any comfortable way - the AI will understand context and create accurate transactions.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let recognition;
+let isRecording = false;
+let isProcessing = false;
+
+// Check browser support
+if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    document.getElementById('browserWarning').style.display = 'block';
+    document.getElementById('voiceButton').disabled = true;
+    document.getElementById('voiceStatus').textContent = 'Voice input not supported in this browser';
+} else {
+    // Initialize speech recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    
+    recognition.onstart = function() {
+        isRecording = true;
+        updateUI();
+        document.getElementById('voiceStatus').textContent = 'Listening... Speak now!';
+    };
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('transcriptText').textContent = transcript;
+        document.getElementById('voiceTranscript').style.display = 'block';
+        
+        // Process the transcript
+        processVoiceInput(transcript);
+    };
+    
+    recognition.onerror = function(event) {
+        isRecording = false;
+        isProcessing = false;
+        updateUI();
+        
+        let errorMessage = 'Speech recognition error occurred.';
+        switch(event.error) {
+            case 'no-speech':
+                errorMessage = 'No speech detected. Please try again.';
+                break;
+            case 'audio-capture':
+                errorMessage = 'Microphone not accessible. Please check permissions.';
+                break;
+            case 'not-allowed':
+                errorMessage = 'Microphone access denied. Please allow microphone access.';
+                break;
+            case 'network':
+                errorMessage = 'Network error occurred. Please check your connection.';
+                break;
+        }
+        
+        document.getElementById('voiceStatus').textContent = errorMessage;
+    };
+    
+    recognition.onend = function() {
+        if (isRecording && !isProcessing) {
+            isRecording = false;
+            updateUI();
+            document.getElementById('voiceStatus').textContent = 'Processing your request...';
+        }
+    };
+}
+
+function toggleRecording() {
+    if (!recognition) return;
+    
+    if (isRecording) {
+        recognition.stop();
+    } else if (!isProcessing) {
+        clearResults();
+        recognition.start();
+    }
+}
+
+function updateUI() {
+    const button = document.getElementById('voiceButton');
+    const icon = document.getElementById('voiceIcon');
+    
+    button.className = 'voice-button';
+    
+    if (isRecording) {
+        button.classList.add('recording');
+        icon.className = 'fas fa-stop';
+    } else if (isProcessing) {
+        button.classList.add('processing');
+        icon.className = 'fas fa-cog';
+    } else {
+        icon.className = 'fas fa-microphone';
+    }
+}
+
+function processVoiceInput(transcript) {
+    isProcessing = true;
+    updateUI();
+    document.getElementById('voiceStatus').textContent = 'Creating transaction...';
+    
+    // Send to server for processing
+    fetch('{% url "voice_transaction" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: `voice_text=${encodeURIComponent(transcript)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        isProcessing = false;
+        updateUI();
+        
+        if (data.success) {
+            displaySuccess(data.transaction);
+        } else {
+            displayError(data.error);
+        }
+    })
+    .catch(error => {
+        isProcessing = false;
+        updateUI();
+        displayError('Network error occurred. Please try again.');
+        console.error('Error:', error);
+    });
+}
+
+function displaySuccess(transaction) {
+    const resultDiv = document.getElementById('voiceResult');
+    const typeColor = {
+        'income': 'text-success',
+        'expense': 'text-danger',
+        'transfer': 'text-warning'
+    }[transaction.type] || 'text-secondary';
+    
+    const typeIcon = {
+        'income': 'fas fa-arrow-up',
+        'expense': 'fas fa-arrow-down',
+        'transfer': 'fas fa-exchange-alt'
+    }[transaction.type] || 'fas fa-circle';
+    
+    resultDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h5 class="text-success mb-1">
+                    <i class="fas fa-check-circle"></i> Transaction Created Successfully!
+                </h5>
+                <p class="text-muted mb-0">Your voice input has been processed and saved.</p>
+            </div>
+            <div class="text-end">
+                <div class="h4 ${typeColor} mb-0">
+                    <i class="${typeIcon}"></i> $${transaction.amount.toFixed(2)}
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="small text-muted">Type</div>
+                <div class="fw-medium">${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Category</div>
+                <div class="fw-medium">${transaction.category || 'Uncategorized'}</div>
+            </div>
+        </div>
+        
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <div class="small text-muted">Description</div>
+                <div class="fw-medium">${transaction.description || 'Voice transaction'}</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-muted">Date</div>
+                <div class="fw-medium">${transaction.date}</div>
+            </div>
+        </div>
+        
+        <div class="mt-3 pt-3 border-top">
+            <div class="d-flex gap-2">
+                <a href="/transactions/${transaction.id}/edit/" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{% url 'transactions' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-list"></i> View All
+                </a>
+            </div>
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
+    document.getElementById('voiceStatus').textContent = 'Ready for next transaction';
+}
+
+function displayError(errorMessage) {
+    const resultDiv = document.getElementById('voiceResult');
+    resultDiv.innerHTML = `
+        <div class="text-center">
+            <h5 class="text-danger mb-2">
+                <i class="fas fa-exclamation-triangle"></i> Processing Error
+            </h5>
+            <p class="mb-3">${errorMessage}</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <button class="btn btn-sm btn-primary" onclick="clearResults()">
+                    <i class="fas fa-microphone"></i> Try Again
+                </button>
+                <a href="{% url 'transaction_create' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-keyboard"></i> Manual Entry
+                </a>
+            </div>
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
+    document.getElementById('voiceStatus').textContent = 'Ready to try again';
+}
+
+function clearResults() {
+    document.getElementById('voiceTranscript').style.display = 'none';
+    document.getElementById('voiceResult').style.display = 'none';
+    document.getElementById('transcriptText').textContent = '';
+    document.getElementById('voiceStatus').textContent = 'Click the microphone to start recording';
+    
+    isRecording = false;
+    isProcessing = false;
+    updateUI();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    
+    if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggleRecording();
+    } else if (e.key === 'Escape') {
+        if (isRecording) {
+            recognition.stop();
+        }
+        clearResults();
+    }
+});
+
+// Add CSRF token for AJAX requests
+document.addEventListener('DOMContentLoaded', function() {
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfToken);
+    }
+});
+</script>
+{% endblock %}
