@@ -47,20 +47,29 @@ class Transaction(models.Model):
         ('income', 'Income'),
         ('transfer', 'Transfer'),
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, db_index=True)
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL, db_index=True)
     account = models.ForeignKey(Account, null=True, blank=True, related_name='transactions', on_delete=models.SET_NULL)
     transfer_account = models.ForeignKey(Account, null=True, blank=True, related_name='incoming_transfers', on_delete=models.SET_NULL)
-    trans_type = models.CharField(max_length=10, choices=TRAN_TYPES, default='expense')
-    date = models.DateField(default=timezone.now)
+    trans_type = models.CharField(max_length=10, choices=TRAN_TYPES, default='expense', db_index=True)
+    date = models.DateField(default=timezone.now, db_index=True)
     time = models.TimeField(null=True, blank=True)
     description = models.TextField(blank=True)
     receipt = models.FileField(upload_to='receipts/', null=True, blank=True)
     tags = models.CharField(max_length=200, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'date']),
+            models.Index(fields=['user', 'trans_type']),
+            models.Index(fields=['user', 'category']),
+            models.Index(fields=['date', 'trans_type']),
+        ]
+        ordering = ['-date', '-created_at']
 
     def __str__(self):
         return f"{self.trans_type} {self.amount} - {self.user.username}"

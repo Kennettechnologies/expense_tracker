@@ -51,7 +51,7 @@ def profile(request):
 
 @login_required
 def transactions(request):
-    qs = Transaction.objects.filter(user=request.user).order_by('-date', '-time')
+    qs = Transaction.objects.filter(user=request.user).select_related('category', 'account', 'transfer_account').prefetch_related('splits__category').order_by('-date', '-time')
 
     # filters
     q = request.GET.get('q')
@@ -82,7 +82,14 @@ def transactions(request):
             qs = qs.filter(amount__lte=float(max_amt))
         except Exception:
             pass
-    return render(request, 'transactions.html', {'transactions': qs})
+    
+    # Paginate results for better performance
+    from django.core.paginator import Paginator
+    paginator = Paginator(qs, 50)  # Show 50 transactions per page
+    page_number = request.GET.get('page')
+    transactions = paginator.get_page(page_number)
+    
+    return render(request, 'transactions.html', {'transactions': transactions})
 
 
 @login_required
@@ -189,46 +196,65 @@ def import_transactions_csv(request):
 def dashboard(request):
     from datetime import timedelta
     from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+    from django.db.models import Q, Case, When, DecimalField
+    from django.core.cache import cache
     from decimal import Decimal
+    
+    # Create cache key based on user and current date
+    cache_key = f'dashboard_data_{request.user.id}_{timezone.now().date()}'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data:
+        return render(request, 'dashboard.html', cached_data)
     
     today = timezone.now().date()
     start_month = today.replace(day=1)
     last_month_start = (start_month - timedelta(days=1)).replace(day=1)
     last_month_end = start_month - timedelta(days=1)
     
-    # Current month transactions
-    trans = Transaction.objects.filter(user=request.user, date__gte=start_month, date__lte=today)
-    income = trans.filter(trans_type='income').aggregate(total=Sum('amount'))['total'] or 0
-    expenses = trans.filter(trans_type='expense').aggregate(total=Sum('amount'))['total'] or 0
+    # Optimize with single query for current and last month data
+    all_transactions = Transaction.objects.filter(
+        user=request.user,
+        date__gte=last_month_start,
+        date__lte=today
+    ).select_related('category', 'account').prefetch_related('splits__category')
+    
+    # Split transactions by month using Python (more efficient than separate queries)
+    current_month_trans = [t for t in all_transactions if t.date >= start_month]
+    last_month_trans = [t for t in all_transactions if t.date < start_month]
+    
+    # Calculate current month totals
+    income = sum(float(t.amount) for t in current_month_trans if t.trans_type == 'income')
+    expenses = sum(float(t.amount) for t in current_month_trans if t.trans_type == 'expense')
     net = income - expenses
     
-    # Last month comparison
-    last_month_trans = Transaction.objects.filter(user=request.user, date__gte=last_month_start, date__lte=last_month_end)
-    last_month_income = last_month_trans.filter(trans_type='income').aggregate(total=Sum('amount'))['total'] or 0
-    last_month_expenses = last_month_trans.filter(trans_type='expense').aggregate(total=Sum('amount'))['total'] or 0
+    # Calculate last month totals
+    last_month_income = sum(float(t.amount) for t in last_month_trans if t.trans_type == 'income')
+    last_month_expenses = sum(float(t.amount) for t in last_month_trans if t.trans_type == 'expense')
     
     # Calculate percentage changes
     income_change = ((income - last_month_income) / last_month_income * 100) if last_month_income else 0
     expense_change = ((expenses - last_month_expenses) / last_month_expenses * 100) if last_month_expenses else 0
     
-    # Account balances
-    accounts = Account.objects.filter(user=request.user)
+    # Account balances - single query
+    accounts = Account.objects.filter(user=request.user).only('balance')
     total_balance = sum(float(acc.balance) for acc in accounts)
     
-    # Recent transactions (last 5)
-    recent_transactions = Transaction.objects.filter(user=request.user).order_by('-created_at')[:5]
+    # Recent transactions (last 5) - optimized query
+    recent_transactions = Transaction.objects.filter(user=request.user).select_related('category', 'account').order_by('-created_at')[:5]
     
-    # Top spending categories
+    # Top spending categories - optimized calculation
     cat_totals = {}
-    for t in trans.filter(trans_type='expense'):
-        splits = list(t.splits.all())
-        if splits:
-            for s in splits:
-                name = s.category.name if s.category else 'Uncategorized'
-                cat_totals[name] = cat_totals.get(name, 0) + float(s.amount)
-        else:
-            name = t.category.name if t.category else 'Uncategorized'
-            cat_totals[name] = cat_totals.get(name, 0) + float(t.amount)
+    for t in current_month_trans:
+        if t.trans_type == 'expense':
+            splits = [s for s in t.splits.all()] if hasattr(t, 'splits') else []
+            if splits:
+                for s in splits:
+                    name = s.category.name if s.category else 'Uncategorized'
+                    cat_totals[name] = cat_totals.get(name, 0) + float(s.amount)
+            else:
+                name = t.category.name if t.category else 'Uncategorized'
+                cat_totals[name] = cat_totals.get(name, 0) + float(t.amount)
     
     by_category = sorted([{'category__name': k, 'total': v} for k, v in cat_totals.items()], key=lambda x: x['total'], reverse=True)[:6]
     
@@ -293,9 +319,10 @@ def dashboard(request):
     daily_totals = [{'day': d['day'].strftime('%Y-%m-%d'), 'total': float(d['total'] or 0)} for d in daily_qs]
     
     # Spending insights
-    insights = generate_spending_insights(request.user, trans, by_category, expenses, last_month_expenses)
+    insights = generate_spending_insights(request.user, current_month_trans, by_category, expenses, last_month_expenses)
     
-    return render(request, 'dashboard.html', {
+    # Prepare context data
+    context = {
         'income': income,
         'expenses': expenses,
         'net': net,
@@ -311,7 +338,12 @@ def dashboard(request):
         'weekly_totals': weekly_totals,
         'daily_totals': daily_totals,
         'insights': insights,
-    })
+    }
+    
+    # Cache the context for 5 minutes
+    cache.set(cache_key, context, 300)
+    
+    return render(request, 'dashboard.html', context)
 
 
 def calculate_financial_health_score(user, income, expenses, total_balance):

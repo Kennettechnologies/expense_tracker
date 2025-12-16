@@ -117,6 +117,22 @@ LOGOUT_REDIRECT_URL = '/'
 # Email Configuration (for development - use console backend)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Caching Configuration for Performance
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'expense-tracker-cache',
+        'TIMEOUT': 300,  # 5 minutes
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# Session Configuration for Performance
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_CACHE_ALIAS = 'default'
+
 # Advanced features will be enabled after installing dependencies
 # Django Allauth, Celery, and other advanced features are commented out
 # until the required packages are installed
