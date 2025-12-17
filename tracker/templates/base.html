@@ -36,6 +36,7 @@
       .dark-theme .dropdown-menu {
         background-color: #2d2d2d !important;
         border: 1px solid #444;
+        z-index: 99999 !important;
       }
       
       .dark-theme .dropdown-item:hover {
@@ -187,6 +188,85 @@
       .dark-theme p, .dark-theme span, .dark-theme div:not(.progress-bar):not(.badge) {
         color: inherit !important;
       }
+      
+      /* Enhanced Alert Styling */
+      .alert {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: currentColor;
+        opacity: 0.8;
+      }
+      
+      .alert-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border-left: 4px solid #28a745;
+      }
+      
+      .alert-danger {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+      }
+      
+      .alert-info {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        color: #0c5460;
+        border-left: 4px solid #17a2b8;
+      }
+      
+      .alert-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border-left: 4px solid #ffc107;
+      }
+      
+      .btn-close {
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+      }
+      
+      .btn-close:hover {
+        opacity: 1;
+      }
+      
+      /* Dark theme alert styles */
+      .dark-theme .alert-success {
+        background: linear-gradient(135deg, #1e3a2e 0%, #2d5a3d 100%);
+        color: #a3d9a5;
+        border-left-color: #28a745;
+      }
+      
+      .dark-theme .alert-danger {
+        background: linear-gradient(135deg, #3a1e1e 0%, #5a2d2d 100%);
+        color: #f5a3a3;
+        border-left-color: #dc3545;
+      }
+      
+      .dark-theme .alert-info {
+        background: linear-gradient(135deg, #1e2e3a 0%, #2d3d5a 100%);
+        color: #a3c5d9;
+        border-left-color: #17a2b8;
+      }
+      
+      .dark-theme .alert-warning {
+        background: linear-gradient(135deg, #3a3a1e 0%, #5a5a2d 100%);
+        color: #d9d9a3;
+        border-left-color: #ffc107;
+      }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -278,7 +358,10 @@
     </nav>
     <div class="container mt-4">
       {% if messages %} {% for message in messages %}
-      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
       {% endfor %} {% endif %} {% block content %}{% endblock %}
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -324,6 +407,15 @@
           }
         }
       }
+      
+      // Auto-dismiss success messages after 5 seconds
+      setTimeout(function() {
+        const successAlerts = document.querySelectorAll('.alert-success, .alert-info');
+        successAlerts.forEach(function(alert) {
+          const bsAlert = new bootstrap.Alert(alert);
+          bsAlert.close();
+        });
+      }, 5000);
     </script>
     {% block scripts %}{% endblock %}
   </body>

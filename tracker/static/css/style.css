@@ -123,11 +123,44 @@ body {
 .navbar {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 9999;
 }
 
 .navbar-brand {
   font-weight: 700;
   font-size: 1.5rem;
+}
+
+/* Fix dropdown z-index to prevent overlap with hero sections - Chrome compatibility */
+.navbar .dropdown-menu {
+  z-index: 99999 !important;
+  position: absolute !important;
+}
+
+.navbar .dropdown {
+  position: relative;
+  z-index: 99998;
+}
+
+/* Ensure navbar items have proper stacking context */
+.navbar .nav-item {
+  position: relative;
+  z-index: 99997;
+}
+
+/* Additional Chrome compatibility fixes */
+.dropdown-menu.show {
+  z-index: 99999 !important;
+  position: absolute !important;
+  transform: translate3d(0, 0, 0) !important;
+}
+
+/* Force hardware acceleration for better rendering */
+.navbar .dropdown-menu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 /* Smooth Animations */

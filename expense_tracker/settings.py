@@ -70,7 +70,8 @@ WSGI_APPLICATION = 'expense_tracker.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL'),
-        conn_max_age=600
+        conn_max_age=0,  # Disable connection pooling for Neon compatibility
+        conn_health_checks=True  # Enable health checks
     )
 }
 

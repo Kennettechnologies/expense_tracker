@@ -411,7 +411,8 @@ def generate_spending_insights(user, transactions, by_category, current_expenses
     
     # Spending trend
     if last_month_expenses > 0:
-        change = ((current_expenses - last_month_expenses) / last_month_expenses) * 100
+        from decimal import Decimal
+        change = float((Decimal(str(current_expenses)) - Decimal(str(last_month_expenses))) / Decimal(str(last_month_expenses)) * 100)
         if change > 20:
             insights.append({
                 'type': 'warning',
@@ -429,7 +430,7 @@ def generate_spending_insights(user, transactions, by_category, current_expenses
     if by_category:
         top_category = by_category[0]
         from decimal import Decimal
-        percentage = float(Decimal(str(top_category['total'])) / current_expenses * 100) if current_expenses > 0 else 0
+        percentage = float(Decimal(str(top_category['total'])) / Decimal(str(current_expenses)) * 100) if current_expenses > 0 else 0
         if percentage > 40:
             insights.append({
                 'type': 'info',
@@ -438,7 +439,7 @@ def generate_spending_insights(user, transactions, by_category, current_expenses
             })
     
     # Transaction frequency
-    transaction_count = transactions.count()
+    transaction_count = len(transactions)
     if transaction_count > 50:
         insights.append({
             'type': 'info',
