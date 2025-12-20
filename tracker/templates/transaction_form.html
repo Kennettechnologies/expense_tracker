@@ -2,19 +2,57 @@
 
 {% block extra_css %}
 <style>
+  :root {
+    --primary-color: #2d3748;
+    --primary-light: #4a5568;
+    --success-color: #38a169;
+    --danger-color: #e53e3e;
+    --warning-color: #d69e2e;
+    --gray-50: #f8fafc;
+    --gray-100: #edf2f7;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e0;
+    --gray-400: #a0aec0;
+    --gray-500: #718096;
+    --gray-600: #4a5568;
+    --gray-700: #2d3748;
+    --gray-800: #1a202c;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+  }
+  
   .transaction-form-container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 2rem auto;
     padding: 0 1.25rem;
   }
   
   .form-card {
     background: white;
-    border-radius: 14px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-    padding: 2.5rem 3rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    padding: 3rem;
     margin-bottom: 2.5rem;
-    border: 1px solid #edf2f7;
+    border: 1px solid var(--gray-100);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--success-color) 50%, var(--warning-color) 100%);
   }
   
   .form-header {
@@ -24,103 +62,189 @@
   }
   
   .form-title {
-    font-size: 1.75rem;
-    font-weight: 650;
-    color: #1a202c;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-800);
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
+    position: relative;
   }
   
   .form-title i {
-    color: #667eea;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  .form-subtitle {
+    color: var(--gray-500);
+    font-size: 1rem;
+    font-weight: 400;
+    margin-top: 0.5rem;
+  }
+  
+  .form-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-title i {
+    color: var(--primary-color);
+    font-size: 1rem;
   }
   
   .form-group {
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
+    position: relative;
   }
   
   .form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    color: #4a5568;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--gray-700);
     font-size: 0.95rem;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-label i {
+    color: var(--gray-400);
+    font-size: 0.9rem;
+  }
+
+  .form-label .required {
+    color: var(--danger-color);
+    margin-left: 0.25rem;
   }
   
   .form-control, .form-select {
-    border-radius: 10px;
-    padding: 0.75rem 1.1rem;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--gray-200);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 1rem;
     line-height: 1.5;
-    background-color: #f8fafc;
+    background-color: var(--gray-50);
     width: 100%;
+    position: relative;
   }
   
   .form-control:focus, .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(45, 55, 72, 0.1);
     background-color: #fff;
     outline: none;
+    transform: translateY(-1px);
+  }
+
+  .form-control:hover:not(:focus), .form-select:hover:not(:focus) {
+    border-color: var(--gray-300);
+    background-color: #fff;
   }
   
   .input-group-text {
-    background-color: #f0f4f8;
-    border: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+    border: 2px solid var(--gray-200);
     border-right: none;
-    border-radius: 10px 0 0 10px;
-    color: #4a5568;
-    font-weight: 500;
+    border-radius: 12px 0 0 12px;
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
   }
   
   .input-group .form-control {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
+    border-left: none;
+  }
+
+  .input-group .form-control:focus {
+    border-left: 2px solid var(--primary-color);
   }
   
   .btn {
-    font-weight: 500;
-    border-radius: 10px;
-    padding: 0.75rem 1.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 1rem 2rem;
     font-size: 1rem;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     line-height: 1.5;
+    border: none;
+    position: relative;
+    overflow: hidden;
   }
   
   .btn i {
     font-size: 1.1em;
   }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn:hover::before {
+    left: 100%;
+  }
   
   .btn-submit {
-    background: #667eea;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
     color: white;
-    border: none;
-    box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.2), 0 2px 4px -1px rgba(102, 126, 234, 0.1);
+    box-shadow: var(--shadow-lg);
+    min-width: 180px;
   }
   
   .btn-submit:hover {
-    background: #5a6fd1;
-    transform: translateY(-1px);
-    box-shadow: 0 10px 15px -3px rgba(102, 126, 234, 0.2), 0 4px 6px -2px rgba(102, 126, 234, 0.1);
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--gray-700) 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+    color: white;
   }
   
   .btn-cancel {
-    background: #f8fafc;
-    color: #4a5568;
-    border: 1px solid #e2e8f0;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    border: 2px solid var(--gray-200);
+    min-width: 120px;
   }
   
   .btn-cancel:hover {
-    background: #edf2f7;
-    border-color: #cbd5e0;
-    color: #2d3748;
+    background: var(--gray-200);
+    border-color: var(--gray-300);
+    color: var(--gray-700);
+    transform: translateY(-1px);
   }
   
   .splits-section {
@@ -250,44 +374,182 @@
     padding-right: 2.5rem;
   }
   
+  /* Transaction Type Selector */
+  .transaction-type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .type-option {
+    padding: 1.25rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    background: var(--gray-50);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+  }
+
+  .type-option:hover {
+    border-color: var(--gray-300);
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .type-option.selected {
+    border-color: var(--primary-color);
+    background: rgba(45, 55, 72, 0.05);
+    box-shadow: var(--shadow-md);
+  }
+
+  .type-option .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.2rem;
+    color: white;
+  }
+
+  .type-option.expense .icon {
+    background: linear-gradient(135deg, var(--danger-color) 0%, #f56565 100%);
+  }
+
+  .type-option.income .icon {
+    background: linear-gradient(135deg, var(--success-color) 0%, #48bb78 100%);
+  }
+
+  .type-option.transfer .icon {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #ecc94b 100%);
+  }
+
+  .type-option .label {
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 0.95rem;
+  }
+
   /* Form actions */
   .form-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     gap: 1rem;
-    margin-top: 2.5rem;
-    padding-top: 1.75rem;
-    border-top: 1px solid #f0f4f8;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--gray-100);
+  }
+
+  .form-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-500);
+    font-size: 0.9rem;
+  }
+
+  .progress-bar {
+    width: 100px;
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-color) 0%, var(--primary-color) 100%);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  /* Quick Actions */
+  .quick-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+  }
+
+  .quick-action {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    background: white;
+    color: var(--gray-600);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .quick-action:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    text-decoration: none;
   }
   
   @media (max-width: 768px) {
     .transaction-form-container {
       padding: 0 0.75rem;
+      margin: 1rem auto;
     }
     
     .form-card {
-      padding: 1.75rem 1.25rem;
-      border-radius: 12px;
+      padding: 2rem 1.5rem;
+      border-radius: 16px;
     }
     
     .form-title {
-      font-size: 1.5rem;
+      font-size: 1.75rem;
+      flex-direction: column;
+      text-align: center;
+      gap: 0.75rem;
+    }
+
+    .transaction-type-selector {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .quick-actions {
+      flex-direction: column;
+      gap: 0.5rem;
     }
     
     .form-actions {
-      flex-direction: column;
-      gap: 0.75rem;
+      flex-direction: column-reverse;
+      gap: 1rem;
     }
     
     .btn {
       width: 100%;
-      padding: 0.75rem 1.5rem;
+      padding: 1rem 1.5rem;
     }
     
     .splits-table {
       display: block;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+    }
+
+    .form-progress {
+      order: -1;
+      justify-content: center;
     }
   }
 </style>
@@ -298,94 +560,185 @@
   <div class="form-card">
     <div class="form-header">
       <h1 class="form-title">
-        <i class="fas fa-exchange-alt"></i>
-        {% if edit %}Edit Transaction{% else %}New Transaction{% endif %}
+        <i class="fas fa-plus-circle"></i>
+        <div>
+          {% if edit %}Edit Transaction{% else %}New Transaction{% endif %}
+          <div class="form-subtitle">
+            {% if edit %}Update your transaction details{% else %}Add a new income, expense, or transfer{% endif %}
+          </div>
+        </div>
       </h1>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <a href="{% url 'templates' %}" class="quick-action">
+        <i class="fas fa-bolt"></i>
+        Use Template
+      </a>
+      <a href="{% url 'recurring_transactions' %}" class="quick-action">
+        <i class="fas fa-redo"></i>
+        Recurring
+      </a>
+      <a href="{% url 'transaction_list' %}" class="quick-action">
+        <i class="fas fa-history"></i>
+        Recent
+      </a>
     </div>
     
     <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
       {% csrf_token %}
-      
-      <div class="row g-4">
-        <div class="col-md-6">
-          <div class="form-group">
-            <label class="form-label" for="id_date">
-              <i class="far fa-calendar-alt me-1"></i> Date
-            </label>
-            <div class="position-relative">
+
+      <!-- Transaction Type Selector -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-exchange-alt"></i>
+          Transaction Type
+        </h3>
+        <div class="transaction-type-selector">
+          <div class="type-option expense" onclick="selectTransactionType('expense')">
+            <div class="icon">
+              <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="label">Expense</div>
+          </div>
+          <div class="type-option income" onclick="selectTransactionType('income')">
+            <div class="icon">
+              <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="label">Income</div>
+          </div>
+          <div class="type-option transfer" onclick="selectTransactionType('transfer')">
+            <div class="icon">
+              <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="label">Transfer</div>
+          </div>
+        </div>
+        {{ form.trans_type }}
+      </div>
+
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-info-circle"></i>
+          Basic Information
+        </h3>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="id_amount">
+                <i class="fas fa-dollar-sign"></i>
+                Amount
+                <span class="required">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                {{ form.amount }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="id_date">
+                <i class="fas fa-calendar-alt"></i>
+                Date
+                <span class="required">*</span>
+              </label>
               {{ form.date }}
-              <i class="fas fa-calendar-alt position-absolute" style="right: 1rem; top: 50%; transform: translateY(-50%); color: #a0aec0;"></i>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="id_category">
+                <i class="fas fa-tag"></i>
+                Category
+              </label>
+              {{ form.category }}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="id_account">
+                <i class="fas fa-wallet"></i>
+                Account
+              </label>
+              {{ form.account }}
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-group">
+              <label class="form-label" for="id_description">
+                <i class="fas fa-align-left"></i>
+                Description
+              </label>
+              {{ form.description }}
             </div>
           </div>
         </div>
-        
-        <div class="col-md-6">
-          <div class="form-group">
-            <label class="form-label" for="id_amount">
-              <i class="fas fa-money-bill-wave me-1"></i> Amount
-            </label>
-            <div class="input-group">
-              <span class="input-group-text">$</span>
-              {{ form.amount }}
+      </div>
+
+      <!-- Additional Details -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-plus"></i>
+          Additional Details
+        </h3>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="id_time">
+                <i class="fas fa-clock"></i>
+                Time (Optional)
+              </label>
+              {{ form.time }}
             </div>
           </div>
-        </div>
-        
-        <div class="col-12">
-          <div class="form-group">
-            <label class="form-label" for="id_description">
-              <i class="fas fa-align-left me-1"></i> Description
-            </label>
-            {{ form.description }}
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="id_tags">
+                <i class="fas fa-hashtag"></i>
+                Tags (Optional)
+              </label>
+              {{ form.tags }}
+            </div>
           </div>
-        </div>
-        
-        <div class="col-md-6">
-          <div class="form-group">
-            <label class="form-label" for="id_category">
-              <i class="fas fa-tag me-1"></i> Category
-            </label>
-            {{ form.category }}
-          </div>
-        </div>
-        
-        <div class="col-md-6">
-          <div class="form-group">
-            <label class="form-label" for="id_trans_type">
-              <i class="fas fa-exchange-alt me-1"></i> Type
-            </label>
-            {{ form.trans_type }}
-          </div>
-        </div>
-        
-        <div class="col-12">
-          <div class="form-group">
-            <label class="form-label" for="id_notes">
-              <i class="far fa-sticky-note me-1"></i> Notes (Optional)
-            </label>
-            {{ form.notes }}
-            <div class="form-text text-muted">Add any additional details about this transaction</div>
-          </div>
-        </div>
-        
-        <div class="col-12">
-          <div class="form-group">
-            <label class="form-label" for="id_receipt">
-              <i class="fas fa-receipt me-1"></i> Receipt (Optional)
-            </label>
-            {{ form.receipt }}
-            <div class="form-text text-muted">Upload a receipt or invoice (PDF, JPG, or PNG)</div>
+
+          <div class="col-12">
+            <div class="form-group">
+              <label class="form-label" for="id_receipt">
+                <i class="fas fa-receipt"></i>
+                Receipt (Optional)
+              </label>
+              {{ form.receipt }}
+              <div class="form-text text-muted">Upload a receipt or invoice (PDF, JPG, PNG, or other image formats)</div>
+            </div>
           </div>
         </div>
       </div>
       
       <div class="form-actions">
-        <a class="btn btn-cancel" href="{% url 'transactions' %}">
-          <i class="fas fa-times"></i> Cancel
-        </a>
-        <button type="submit" class="btn btn-submit">
-          <i class="fas fa-save"></i> {% if edit %}Update{% else %}Create{% endif %} Transaction
-        </button>
+        <div class="form-progress">
+          <span>Form Progress</span>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+        <div>
+          <a class="btn btn-cancel" href="{% url 'transactions' %}">
+            <i class="fas fa-times"></i>
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-submit">
+            <i class="fas fa-save"></i>
+            {% if edit %}Update Transaction{% else %}Create Transaction{% endif %}
+          </button>
+        </div>
       </div>
     </form>
     
@@ -433,4 +786,209 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Bootstrap classes to form fields
+    const formControls = document.querySelectorAll('input, select, textarea');
+    formControls.forEach(function(control) {
+        if (!control.classList.contains('btn')) {
+            control.classList.add('form-control');
+        }
+    });
+
+    // Hide the original transaction type select
+    const transTypeSelect = document.getElementById('id_trans_type');
+    if (transTypeSelect) {
+        transTypeSelect.style.display = 'none';
+    }
+
+    // Initialize transaction type selector
+    initializeTransactionTypeSelector();
+    
+    // Initialize form progress tracking
+    initializeFormProgress();
+    
+    // Add form validation
+    initializeFormValidation();
+});
+
+function selectTransactionType(type) {
+    // Update visual selection
+    document.querySelectorAll('.type-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.querySelector(`.type-option.${type}`).classList.add('selected');
+    
+    // Update hidden select field
+    const transTypeSelect = document.getElementById('id_trans_type');
+    if (transTypeSelect) {
+        transTypeSelect.value = type;
+    }
+    
+    // Update form progress
+    updateFormProgress();
+}
+
+function initializeTransactionTypeSelector() {
+    const transTypeSelect = document.getElementById('id_trans_type');
+    if (transTypeSelect && transTypeSelect.value) {
+        // Set initial selection based on form value
+        selectTransactionType(transTypeSelect.value);
+    } else {
+        // Default to expense
+        selectTransactionType('expense');
+    }
+}
+
+function initializeFormProgress() {
+    const requiredFields = ['id_amount', 'id_date'];
+    const allFields = ['id_amount', 'id_date', 'id_category', 'id_account', 'id_description'];
+    
+    allFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', updateFormProgress);
+            field.addEventListener('change', updateFormProgress);
+        }
+    });
+    
+    // Initial progress calculation
+    updateFormProgress();
+}
+
+function updateFormProgress() {
+    const requiredFields = ['id_amount', 'id_date', 'id_trans_type'];
+    const optionalFields = ['id_category', 'id_account', 'id_description'];
+    const allFields = [...requiredFields, ...optionalFields];
+    
+    let filledFields = 0;
+    let totalWeight = 0;
+    
+    // Required fields have more weight
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        totalWeight += 2;
+        if (field && field.value && field.value.trim() !== '') {
+            filledFields += 2;
+        }
+    });
+    
+    // Optional fields have less weight
+    optionalFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        totalWeight += 1;
+        if (field && field.value && field.value.trim() !== '') {
+            filledFields += 1;
+        }
+    });
+    
+    const progress = Math.min((filledFields / totalWeight) * 100, 100);
+    const progressFill = document.querySelector('.progress-fill');
+    if (progressFill) {
+        progressFill.style.width = progress + '%';
+    }
+}
+
+function initializeFormValidation() {
+    const form = document.querySelector('form');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validate required fields
+        const requiredFields = [
+            { id: 'id_amount', name: 'Amount' },
+            { id: 'id_date', name: 'Date' },
+            { id: 'id_trans_type', name: 'Transaction Type' }
+        ];
+        
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element && (!element.value || element.value.trim() === '')) {
+                showFieldError(element, `${field.name} is required`);
+                isValid = false;
+            } else {
+                clearFieldError(element);
+            }
+        });
+        
+        // Validate amount is positive
+        const amountField = document.getElementById('id_amount');
+        if (amountField && amountField.value) {
+            const amount = parseFloat(amountField.value);
+            if (isNaN(amount) || amount <= 0) {
+                showFieldError(amountField, 'Amount must be a positive number');
+                isValid = false;
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            showNotification('Please fix the errors below', 'error');
+        }
+    });
+}
+
+function showFieldError(field, message) {
+    clearFieldError(field);
+    
+    field.classList.add('is-invalid');
+    field.style.borderColor = 'var(--danger-color)';
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'field-error text-danger small mt-1';
+    errorDiv.textContent = message;
+    
+    field.parentNode.appendChild(errorDiv);
+}
+
+function clearFieldError(field) {
+    field.classList.remove('is-invalid');
+    field.style.borderColor = '';
+    
+    const existingError = field.parentNode.querySelector('.field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Add smooth animations for form interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Add focus animations to form controls
+    const formControls = document.querySelectorAll('.form-control, .form-select');
+    formControls.forEach(control => {
+        control.addEventListener('focus', function() {
+            this.parentNode.style.transform = 'scale(1.02)';
+        });
+        
+        control.addEventListener('blur', function() {
+            this.parentNode.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
 {% endblock %}

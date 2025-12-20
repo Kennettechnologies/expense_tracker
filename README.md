@@ -89,8 +89,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-Your Name - [@yourtwitter](https://twitter.com/kevin_havertz10) 
-
+  - KEVIN ONYANGO
+  - https://twitter.com/kevin_havertz10
   - kevinonyangowanga@gmail.com
 
 Project Link: https://github.com/Kennettechnologies/expense_tracker
