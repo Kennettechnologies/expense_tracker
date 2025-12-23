@@ -16,6 +16,78 @@
     <link href="{% static 'css/style.css' %}" rel="stylesheet" />
     
     <style>
+      /* Modern Navigation Styles */
+      .brand-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+      }
+      
+      .navbar-brand {
+        font-size: 1.4rem;
+        color: #2d3748 !important;
+        font-weight: 700;
+      }
+      
+      .nav-link {
+        font-weight: 500;
+        color: #4a5568 !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 8px;
+        margin: 0 0.25rem;
+        transition: all 0.2s ease;
+      }
+      
+      .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea !important;
+      }
+      
+      .dropdown-menu {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border-radius: 12px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      
+      .dropdown-item {
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        color: #4a5568;
+      }
+      
+      .dropdown-item:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+      }
+      
+      .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #718096;
+        border-radius: 8px;
+        font-weight: 500;
+      }
+      
+      .btn-outline-secondary:hover {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+      }
+      
+      /* Container improvements */
+      .container {
+        max-width: 1200px;
+      }
+      
       /* Dark Mode Styles */
       .dark-theme {
         background-color: #121212 !important;
@@ -27,21 +99,46 @@
         border-bottom: 1px solid #333;
       }
       
-      .dark-theme .navbar-light .navbar-brand,
-      .dark-theme .navbar-light .nav-link,
-      .dark-theme .dropdown-item {
-        color: #e0e0e0 !important;
+      .dark-theme .navbar-brand {
+        color: #f7fafc !important;
+      }
+      
+      .dark-theme .brand-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .dark-theme .nav-link {
+        color: #e2e8f0 !important;
+      }
+      
+      .dark-theme .nav-link:hover {
+        background: rgba(102, 126, 234, 0.2);
+        color: #667eea !important;
       }
       
       .dark-theme .dropdown-menu {
-        background-color: #2d2d2d !important;
-        border: 1px solid #444;
-        z-index: 99999 !important;
+        background-color: #2d3748 !important;
+        border: 1px solid #4a5568;
+      }
+      
+      .dark-theme .dropdown-item {
+        color: #e2e8f0 !important;
       }
       
       .dark-theme .dropdown-item:hover {
-        background-color: #3d3d3d !important;
-        color: #ffffff !important;
+        background-color: rgba(102, 126, 234, 0.2) !important;
+        color: #667eea !important;
+      }
+      
+      .dark-theme .btn-outline-secondary {
+        border-color: #4a5568;
+        color: #e2e8f0;
+      }
+      
+      .dark-theme .btn-outline-secondary:hover {
+        background: #667eea;
+        border-color: #667eea;
+        color: white !important;
       }
       
       .dark-theme .card {
@@ -272,11 +369,16 @@
     {% block extra_css %}{% endblock %}
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="/">Expense Tracker</a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+      <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center fw-bold" href="/">
+          <div class="brand-icon me-2">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          Expense Tracker
+        </a>
         <button
-          class="navbar-toggler"
+          class="navbar-toggler border-0"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
@@ -284,7 +386,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
+          <ul class="navbar-nav ms-auto align-items-center">
             {% if user.is_authenticated %}
             <li class="nav-item me-2">
               <button id="themeToggle" class="btn btn-outline-secondary btn-sm mt-1" onclick="toggleDarkMode()" data-bs-toggle="tooltip" title="Toggle Dark Mode">

@@ -1,6 +1,305 @@
-{% extends 'base.html' %} {% block content %}
-<div class="text-center">
-  <h1>Welcome to Expense Tracker</h1>
-  <p><a href="{% url 'signup' %}" class="btn btn-primary">Get started</a></p>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  .hero-section {
+    min-height: 90vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+    opacity: 0.4;
+  }
+  
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    color: white;
+  }
+  
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.25rem;
+    font-weight: 400;
+    opacity: 0.9;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+    max-width: 600px;
+  }
+  
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+  
+  .btn-hero-primary {
+    background: rgba(255, 255, 255, 0.95);
+    color: #667eea;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .btn-hero-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    color: #667eea;
+    text-decoration: none;
+  }
+  
+  .btn-hero-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .btn-hero-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+  }
+  
+  .features-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 4rem;
+  }
+  
+  .feature-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .feature-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  .feature-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 24px;
+  }
+  
+  .feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  
+  .feature-description {
+    opacity: 0.9;
+    line-height: 1.5;
+  }
+  
+  .stats-section {
+    background: white;
+    padding: 4rem 0;
+    margin-top: -1px;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    text-align: center;
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    color: #718096;
+    font-weight: 500;
+  }
+  
+  /* Dark theme overrides */
+  .dark-theme .stats-section {
+    background: #1a202c;
+  }
+  
+  .dark-theme .stat-label {
+    color: #a0aec0;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.1rem;
+    }
+    
+    .cta-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .btn-hero-primary,
+    .btn-hero-secondary {
+      width: 100%;
+      max-width: 280px;
+      justify-content: center;
+    }
+    
+    .features-preview {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .feature-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-xl-8">
+        <div class="hero-content text-center">
+          <h1 class="hero-title">The easiest way to track your expenses</h1>
+          <p class="hero-subtitle mx-auto">
+            Take control of your finances with smart expense tracking, automated categorization, 
+            and powerful insights. Join thousands who've simplified their money management.
+          </p>
+          
+          <div class="cta-buttons">
+            <a href="{% url 'signup' %}" class="btn-hero-primary">
+              <i class="fas fa-rocket"></i>
+              Get Started Free
+            </a>
+            {% if user.is_authenticated %}
+              <a href="{% url 'dashboard' %}" class="btn-hero-secondary">
+                <i class="fas fa-chart-line"></i>
+                Go to Dashboard
+              </a>
+            {% else %}
+              <a href="{% url 'login' %}" class="btn-hero-secondary">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+              </a>
+            {% endif %}
+          </div>
+          
+          <div class="features-preview">
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fas fa-camera"></i>
+              </div>
+              <h3 class="feature-title">Scan Receipts</h3>
+              <p class="feature-description">
+                Instantly capture receipts with your phone camera and let AI extract the details automatically.
+              </p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fas fa-chart-pie"></i>
+              </div>
+              <h3 class="feature-title">Smart Analytics</h3>
+              <p class="feature-description">
+                Get powerful insights into your spending patterns with beautiful charts and reports.
+              </p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">
+                <i class="fas fa-piggy-bank"></i>
+              </div>
+              <h3 class="feature-title">Budget Goals</h3>
+              <p class="feature-description">
+                Set budgets, track savings goals, and get alerts when you're close to limits.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number">1K+</div>
+        <div class="stat-label">Transactions Tracked</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">50+</div>
+        <div class="stat-label">Happy Users</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">Ksh. 1.2M+</div>
+        <div class="stat-label">Money Managed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">99%</div>
+        <div class="stat-label">Satisfaction Rate</div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
